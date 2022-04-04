@@ -11,7 +11,7 @@
   ],
   "activationEvents": [
     "onCommand:emr-tools-v2.helloWorld",
-	"onView:emrExplorer"
+    "onView:emrExplorer"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -19,6 +19,22 @@
       {
         "command": "emr-tools-v2.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "emr-tools-v2.refreshEntry",
+        "title": "EMR: Refresh",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "emr-tools-v2.refreshContainerEntry",
+        "title": "EMR Containers: Refresh",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
       }
     ],
     "views": {
@@ -26,6 +42,24 @@
         {
           "id": "emrExplorer",
           "name": "EMR Explorer"
+        },
+        {
+          "id": "emrContainersExplorer",
+          "name": "EMR Containers"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "emr-tools-v2.refreshEntry",
+          "when": "view == emrExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "emr-tools-v2.refreshContainerEntry",
+          "when": "view == emrContainersExplorer",
+          "group": "navigation"
         }
       ]
     },
@@ -61,6 +95,7 @@
     "typescript": "^4.5.5"
   },
   "dependencies": {
-    "@aws-sdk/client-emr": "^3.58.0"
+    "@aws-sdk/client-emr": "3.30.0",
+    "@aws-sdk/client-emr-containers": "3.30.0"
   }
 }
