@@ -40,7 +40,7 @@ export class EMRContainersProvider
   ): Promise<EMRVirtualCluster[]> {
     const params = {};
     try {
-      // Note that this requires aws-sdk<=v3.30.0 
+      // Note that this requires aws-sdk<=v3.30.0
       // due to https://github.com/aws/aws-sdk-js-v3/issues/3511
       const result = await client.send(new ListVirtualClustersCommand(params));
       vscode.window.showInformationMessage("Fetching EMR Virtual clusters");
