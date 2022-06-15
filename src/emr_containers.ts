@@ -22,7 +22,7 @@ export class EMRContainersProvider
   }
 
   constructor() {
-    this.emrContainersClient = new EMRContainersClient({ region: "us-east-2" });
+    this.emrContainersClient = new EMRContainersClient({ region: "us-east-1" });
   }
 
   getTreeItem(element: EMRVirtualCluster): vscode.TreeItem {

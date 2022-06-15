@@ -21,6 +21,10 @@
         "title": "Hello World"
       },
       {
+        "command": "emr-tools-v2.deploy",
+        "title": "EMR: Run Code"
+      },
+      {
         "command": "emr-tools-v2.refreshEntry",
         "title": "EMR: Refresh",
         "icon": {
@@ -35,6 +39,26 @@
           "light": "resources/light/refresh.svg",
           "dark": "resources/dark/refresh.svg"
         }
+      },
+      {
+        "command": "emr-tools-v2.refreshServerlessEntry",
+        "title": "EMR Serverless: Refresh",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "emr-tools-v2.connectToCluster",
+        "title": "Connect to EMR Cluster",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "emr-tools-v2.filterClusters",
+        "title": "Include Cluster States"
       }
     ],
     "views": {
@@ -46,6 +70,10 @@
         {
           "id": "emrContainersExplorer",
           "name": "EMR Containers"
+        },
+        {
+          "id": "emrServerlessExplorer",
+          "name": "EMR Serverless"
         }
       ]
     },
@@ -60,6 +88,22 @@
           "command": "emr-tools-v2.refreshContainerEntry",
           "when": "view == emrContainersExplorer",
           "group": "navigation"
+        },
+        {
+          "command": "emr-tools-v2.refreshServerlessEntry",
+          "when": "view == emrServerlessExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "emr-tools-v2.filterClusters",
+          "when": "view == emrExplorer"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "emr-tools-v2.connectToCluster",
+          "when": "view == emrExplorer && viewItem == EMRCluster",
+          "group": "inline@1"
         }
       ]
     },
@@ -68,7 +112,7 @@
         {
           "id": "emr-explorer",
           "title": "Amazon EMR",
-          "icon": "media/emr.png"
+          "icon": "media/emr.svg"
         }
       ]
     }
@@ -96,6 +140,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-emr": "3.30.0",
-    "@aws-sdk/client-emr-containers": "3.30.0"
+    "@aws-sdk/client-emr-containers": "3.30.0",
+    "@aws-sdk/client-ssm": "^3.95.0",
+    "@aws-sdk/client-emr-serverless": "3.105.0"
   }
 }

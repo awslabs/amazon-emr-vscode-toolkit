@@ -1,23 +1,56 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
+import { connectToClusterCommand } from "./emr_connect";
 import { EMRContainersProvider } from "./emr_containers";
-import { NodeDependenciesProvider } from "./emr_explorer";
+import { EMRDeployer } from "./emr_deploy";
+import { EMRCluster, EMREC2Filter, EMREC2Provider } from "./emr_explorer";
+import { EMRServerlessProvider } from "./emr_serverless";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+
+  let logger = vscode.window.createOutputChannel("Amazon EMR");
+
+  const treeFilter = new EMREC2Filter();
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "emr-tools-v2.filterClusters", async () => {
+        await treeFilter.run();
+      }
+    )
+  );
+
   // Tree data providers
-  const emrTools = new NodeDependenciesProvider(vscode.workspace.rootPath + "");
+  const emrTools = new EMREC2Provider(vscode.workspace.rootPath + "", treeFilter, logger);
   vscode.window.registerTreeDataProvider("emrExplorer", emrTools);
   vscode.commands.registerCommand("emr-tools-v2.refreshEntry", () =>
     emrTools.refresh()
   );
+  vscode.commands.registerCommand("emr-tools-v2.connectToCluster", async (cluster: EMRCluster) => {
+    await connectToClusterCommand(cluster);
+  });
 
+  // EMR on EKS support
   const emrContainerTools = new EMRContainersProvider();
   vscode.window.registerTreeDataProvider("emrContainersExplorer", emrContainerTools);
   vscode.commands.registerCommand("emr-tools-v2.refreshContainerEntry", () =>
     emrContainerTools.refresh()
+  );
+
+  // EMR Serverless support
+  const emrServerlessTools = new EMRServerlessProvider();
+  vscode.window.registerTreeDataProvider("emrServerlessExplorer", emrServerlessTools);
+  vscode.commands.registerCommand("emr-tools-v2.refreshServerlessEntry", () => emrServerlessTools.refresh());
+
+  // Deployment support for all our available options
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "emr-tools-v2.deploy", async () => {
+        await new EMRDeployer(emrTools, emrContainerTools, emrServerlessTools).run();
+      }
+    )
   );
 
   // Use the console to output diagnostic information (console.log) and errors (console.error)

@@ -18,8 +18,9 @@ import {
   InstanceState,
   InstanceFleetType,
 } from "@aws-sdk/client-emr";
+import { window } from "vscode";
 
-export class NodeDependenciesProvider
+export class EMREC2Provider
   implements vscode.TreeDataProvider<vscode.TreeItem>
 {
   emrClient: EMR;
@@ -34,8 +35,10 @@ export class NodeDependenciesProvider
     this._onDidChangeTreeData.fire();
   }
 
-  constructor(private workspaceRoot: string) {
+  constructor(private workspaceRoot: string, private stateFilter: EMREC2Filter, private logger: vscode.OutputChannel) {
     this.emrClient = new EMR({ region: "us-west-2" });
+    this.stateFilter = stateFilter;
+    this.logger = logger;
   }
 
   getTreeItem(element: EMRCluster): vscode.TreeItem {
@@ -52,12 +55,15 @@ export class NodeDependenciesProvider
 
   private async listEMRClusters(client: EMR): Promise<EMRCluster[]> {
     // Currently only show running or waiting clusters
+    const showStates = this.stateFilter.getStates();
     const params = {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      ClusterStates: [ClusterState.RUNNING, ClusterState.WAITING],
+      // ClusterStates: [ClusterState.RUNNING, ClusterState.WAITING, ClusterState.TERMINATED, ClusterState.TERMINATING],
+      ClusterStates: showStates,
     };
+    this.logger.appendLine("Fetching clusters in state: " + [...showStates].join(", "));
     vscode.window.showInformationMessage(
-      "Fetching running and waiting clusters"
+      "Fetching clusters in state: " + [...showStates].join(", ")
     );
     try {
       const result = await client.send(new ListClustersCommand(params));
@@ -76,7 +82,7 @@ export class NodeDependenciesProvider
   }
 }
 
-class EMRCluster extends vscode.TreeItem {
+export class EMRCluster extends vscode.TreeItem {
   constructor(
     private readonly details: ClusterSummary,
     private readonly emr: EMR,
@@ -85,6 +91,7 @@ class EMRCluster extends vscode.TreeItem {
     super(details.Name || "No name", collapsibleState);
     this.tooltip = `${details.Name} (${details.Id})`;
     this.description = details.Id;
+    this.contextValue = 'EMRCluster';
   }
 
   public async getChildren(element?: EMRCluster): Promise<vscode.TreeItem[]> {
@@ -93,7 +100,6 @@ class EMRCluster extends vscode.TreeItem {
       new DescribeClusterCommand({ ClusterId: this.details.Id })
     );
     // TODO (2022-04-13): ERROR CHECKING!
-    console.log(response);
     return [
       new EMRClusterApps(
         this.emr,
@@ -207,4 +213,63 @@ class InstanceNodeTree extends vscode.TreeItem {
     return this.children || [];
   }
 
+}
+
+export class EMREC2Filter {
+  private _showStates: Set<string>;
+
+  constructor() {
+    // Default set of states
+    this._showStates = new Set([ClusterState.RUNNING, ClusterState.WAITING]);
+  }
+
+  public async run() {
+    // TODO (2022-06-13): Refactor this to All / Active / Terminated / Failed
+    const allStates = [
+      {
+        name: "Running",
+        state: ClusterState.RUNNING,
+      },
+      {
+        name: "Waiting",
+        state: ClusterState.WAITING,
+      },
+      {
+        name: "Terminated",
+        state: ClusterState.TERMINATED,
+      },
+      {
+        name: "Terminating",
+        state: ClusterState.TERMINATING,
+      },
+      {
+        name: "Failed",
+        state: ClusterState.TERMINATED_WITH_ERRORS,
+      }
+    ];
+
+    const items = [];
+    for (const s of allStates) {
+      items.push({
+        label: s.name,
+        picked: this._showStates ? this._showStates.has(s.state) : false,
+        state: s.state,
+      });
+    }
+
+    const result = await window.showQuickPick(items, {
+      placeHolder: "Show or hide cluster states",
+      canPickMany: true,
+    });
+
+    if (!result) { return false; }
+
+    this._showStates = new Set(result.map(res => res.state!));
+
+    return true;
+  }
+
+  public getStates() {
+    return [...this._showStates];
+  }
 }
