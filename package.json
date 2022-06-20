@@ -11,7 +11,11 @@
   ],
   "activationEvents": [
     "onCommand:emr-tools-v2.helloWorld",
-    "onView:emrExplorer"
+    "onCommand:emr-tools-v2.deploy",
+    "onCommand:emr-tools-v2.localEnvironmentMagic",
+    "onView:emrExplorer",
+    "onView:emrContainersExplorer",
+    "onView:emrServerlessExplorer"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -23,6 +27,10 @@
       {
         "command": "emr-tools-v2.deploy",
         "title": "EMR: Run Code"
+      },
+      {
+        "command": "emr-tools-v2.localEnvironmentMagic",
+        "title": "EMR: Create local Spark environment"
       },
       {
         "command": "emr-tools-v2.refreshEntry",

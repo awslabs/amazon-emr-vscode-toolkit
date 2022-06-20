@@ -1,0 +1,62 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.234.0/containers/debian
+{
+    "name": "EMR",
+    "build": {
+      "dockerfile": "Dockerfile",
+      // Update 'VARIANT' to pick an Debian version: bullseye, buster
+      // Use bullseye on local arm64/Apple Silicon.
+      "args": {
+        "RELEASE": "emr-6.6.0",
+        "RELEASE_TAG": "latest",
+        "REGION": "us-west-2",
+        "EMR_ACCOUNT_ID": "895885662937"
+      }
+    },
+  
+    // Variables defined here will override those in runArgs below.
+    // So users should have one _OR_ the other. But not both.
+    // Ideally, --env-file would be optional and override these, but it's opposkte.
+    "containerEnv": {
+      // "AWS_ACCESS_KEY_ID": "${localEnv:AWS_ACCESS_KEY_ID}",
+      // "AWS_SECRET_ACCESS_KEY": "${localEnv:AWS_SECRET_ACCESS_KEY}",
+      // "AWS_SESSION_TOKEN": "${localEnv:AWS_SESSION_TOKEN}",
+      // "AWS_REGION": "${localEnv:AWS_REGION}",
+      "AWS_EC2_METADATA_DISABLED": "true"
+    },
+  
+    "remoteEnv": {
+      "PYTHONPATH": "/usr/lib/spark/python/lib/py4j-src.zip:/usr/lib/spark/python"
+    },
+  
+    "runArgs": ["--env-file", "${localWorkspaceFolder}/.env"],
+  
+    // "postStartCommand": "if [ ! -v AWS_REGION ]; then export AWS_REGION=us-east-1; fi",
+    // This unfortunately runs as the hadoop user, so doesn't quite work
+    // "postCreateCommand": "echo alias pyspark=\\'pyspark --deploy-mode client --master local[*] --conf spark.hadoop.fs.s3.customAWSCredentialsProvider=com.amazonaws.auth.EnvironmentVariableCredentialsProvider\\' >> /etc/bash.bashrc",
+    // "initializeCommand": "AWS_PROFILE=${env:AWS_PROFILE} aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 895885662937.dkr.ecr.us-west-2.amazonaws.com",
+    "postStartCommand": "sudo /usr/lib/spark/sbin/start-history-server.sh",
+  
+    // Set *default* container specific settings.json values on container create.
+    "settings": {
+      "python.defaultInterpreterPath:": "python3"
+    },
+  
+    // Add the IDs of extensions you want installed when the container is created.
+    "extensions": ["ms-python.python"],
+  
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    "forwardPorts": [18080]
+  
+    // Uncomment to use the Docker CLI from inside the container. See https://aka.ms/vscode-remote/samples/docker-from-docker.
+    // "mounts": [ "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" ],
+    // This is probably the *RIGHT* way to do typical aws creds, but it doesn't work with credential_process
+    // “mounts”: [ “source=${localEnv:HOME}/.aws,target=/root/.aws,type=bind,consistency=cached” ]
+  
+    // Uncomment when using a ptrace-based debugger like C++, Go, and Rust
+    // "runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+  
+    // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    // "remoteUser": "vscode",
+  }
+  

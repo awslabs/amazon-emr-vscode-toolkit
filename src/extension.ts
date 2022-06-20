@@ -5,6 +5,7 @@ import { connectToClusterCommand } from "./emr_connect";
 import { EMRContainersProvider } from "./emr_containers";
 import { EMRDeployer } from "./emr_deploy";
 import { EMRCluster, EMREC2Filter, EMREC2Provider } from "./emr_explorer";
+import { EMRLocalEnvironment } from "./emr_local";
 import { EMRServerlessProvider } from "./emr_serverless";
 
 // this method is called when your extension is activated
@@ -52,6 +53,14 @@ export function activate(context: vscode.ExtensionContext) {
       }
     )
   );
+
+  // Local environment support
+  const emrLocalCreator = new EMRLocalEnvironment(context);
+  context.subscriptions.push(
+    vscode.commands.registerCommand('emr-tools-v2.localEnvironmentMagic', async () => {
+      await emrLocalCreator.run();
+    }
+  ));
 
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
