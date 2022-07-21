@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
+import { AwsContextCommands } from "./aws_context";
 import { connectToClusterCommand } from "./emr_connect";
 import { EMRContainersProvider } from "./emr_containers";
 import { EMRDeployer } from "./emr_deploy";
@@ -8,11 +9,39 @@ import { EMRCluster, EMREC2Filter, EMREC2Provider } from "./emr_explorer";
 import { EMRLocalEnvironment } from "./emr_local";
 import { EMRServerlessProvider } from "./emr_serverless";
 
+// Workaround for https://github.com/aws/aws-sdk-js-v3/issues/3807
+// declare global {
+//   interface ReadableStream {}
+// }
+
+// We create a global namespace for common variables
+export interface Globals {
+  readonly context: vscode.ExtensionContext
+  outputChannel: vscode.OutputChannel
+  awsContext: AwsContextCommands
+  selectedRegion: string
+  selectedProfile: string
+}
+const globals = {} as Globals;
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-  let logger = vscode.window.createOutputChannel("Amazon EMR");
+  const logger = vscode.window.createOutputChannel("Amazon EMR");
+  globals.outputChannel = logger;
+
+  // Allow users to set profile and region
+  const awsContext = new AwsContextCommands();
+  globals.awsContext = awsContext;
+
+  context.subscriptions.push(vscode.commands.registerCommand("emr-tools-v2.selectProfile", async() => {
+    await awsContext.onCommandSetProfile();
+  }));
+
+  context.subscriptions.push(vscode.commands.registerCommand("emr-tools-v2.selectRegion", async() => {
+    await awsContext.onCommandSetRegion();
+  }));
 
   const treeFilter = new EMREC2Filter();
   context.subscriptions.push(
@@ -34,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   // EMR on EKS support
-  const emrContainerTools = new EMRContainersProvider();
+  const emrContainerTools = new EMRContainersProvider(globals);
   vscode.window.registerTreeDataProvider("emrContainersExplorer", emrContainerTools);
   vscode.commands.registerCommand("emr-tools-v2.refreshContainerEntry", () =>
     emrContainerTools.refresh()

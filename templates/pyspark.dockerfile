@@ -13,14 +13,19 @@ USER root
 # Update Spark config for local development
 RUN echo -e "spark.submit.deployMode\tclient\nspark.master\tlocal[*]\nspark.hadoop.fs.s3.customAWSCredentialsProvider\tcom.amazonaws.auth.EnvironmentVariableCredentialsProvider" >> /etc/spark/conf/spark-defaults.conf
 
+# Don't log INFO messages to the console 
+RUN sed -i s/log4j.rootCategory=.*/log4j.rootCategory=WARN,console/ /etc/spark/conf/log4j.properties
+
 # Allow hadoop user to sudo for admin tasks
 RUN yum install -y sudo && \
      echo "hadoop ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
+# Upgrade to AWS CLI v2
+RUN yum install -y unzip && \
+     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+     unzip awscliv2.zip && \
+     ./aws/install && \
+     rm -rf aws awscliv2.zip
+
 # Switch back to the default user
 USER hadoop:hadoop
-
-# ** [Optional] Uncomment this section to install additional packages. **
-# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-#     && apt-get -y install --no-install-recommends <your-package-list-here>
-

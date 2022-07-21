@@ -11,8 +11,8 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import path = require("path");
 
-function welcomeText(region: string, accountId: string){
-    return `# EMR Local Container
+function welcomeText(region: string, accountId: string) {
+  return `# EMR Local Container
 
 ## Getting Started
 
@@ -198,7 +198,7 @@ export class EMRLocalEnvironment {
       fs.mkdirSync(wsPath + "/.devcontainer");
     }
 
-    const demoFileName = 'emr_tools_demo.py';
+    const demoFileName = "emr_tools_demo.py";
     const samplePyspark = this.context.asAbsolutePath(
       path.join("templates", demoFileName)
     );
@@ -213,24 +213,36 @@ export class EMRLocalEnvironment {
     devContainerConfig["build"]["args"]["REGION"] = region;
     devContainerConfig["build"]["args"]["EMR_ACCOUNT_ID"] = account;
 
-    const dockerfile = fs
-      .readFileSync("./templates/pyspark.dockerfile")
-      .toString();
-    const targetDcPath = vscode.Uri.file(
-      wsPath + "/.devcontainer"
-    );
+    // TODO (2022-07-22): Optionally, add mounts of ~/.aws exists
+    // "source=${env:HOME}${env:USERPROFILE}/.aws,target=/home/hadoop/.aws,type=bind"
+    // Also make adding environment credentials optional...they could get exposed in logs
 
-    fs.writeFileSync(targetDcPath.fsPath + '/devcontainer.json', JSON.stringify(devContainerConfig, null, '  '));
-    fs.writeFileSync(targetDcPath.fsPath + '/Dockerfile', dockerfile);
+
+    const dockerfilePath = this.context.asAbsolutePath(
+      path.join("templates", "pyspark.dockerfile")
+    );
+    const dockerfile = fs.readFileSync(dockerfilePath).toString();
+    const targetDcPath = vscode.Uri.file(wsPath + "/.devcontainer");
+
+    fs.writeFileSync(
+      targetDcPath.fsPath + "/devcontainer.json",
+      JSON.stringify(devContainerConfig, null, "  ")
+    );
+    fs.writeFileSync(targetDcPath.fsPath + "/Dockerfile", dockerfile);
     fs.copyFileSync(samplePyspark, wsPath + `/${demoFileName}`);
 
     var setting: vscode.Uri = vscode.Uri.parse("untitled:" + "emr-local.md");
-    vscode.workspace.openTextDocument(setting).then((a: vscode.TextDocument) => {
-        vscode.window.showTextDocument(a, 1, false).then(e => {
-            e.edit(edit => {
-                edit.insert(new vscode.Position(0, 0), welcomeText(region, account));
-            });
+    vscode.workspace
+      .openTextDocument(setting)
+      .then((a: vscode.TextDocument) => {
+        vscode.window.showTextDocument(a, 1, false).then((e) => {
+          e.edit((edit) => {
+            edit.insert(
+              new vscode.Position(0, 0),
+              welcomeText(region, account)
+            );
+          });
         });
-    });
+      });
   }
 }

@@ -20,6 +20,7 @@ import {
 } from "@aws-sdk/client-emr";
 import { window } from "vscode";
 
+
 export class EMREC2Provider
   implements vscode.TreeDataProvider<vscode.TreeItem>
 {
