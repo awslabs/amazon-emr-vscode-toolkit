@@ -2,32 +2,31 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { AwsContextCommands } from "./aws_context";
+import { DefaultEMRContainersClient } from "./clients/emrContainersClient";
 import { connectToClusterCommand } from "./emr_connect";
-import { EMRContainersProvider } from "./emr_containers";
-import { EMRDeployer } from "./emr_deploy";
 import { EMRCluster, EMREC2Filter, EMREC2Provider } from "./emr_explorer";
 import { EMRLocalEnvironment } from "./emr_local";
 import { EMRServerlessProvider } from "./emr_serverless";
+import { EMRContainersNode } from "./explorer/emrContainers";
 
 // Workaround for https://github.com/aws/aws-sdk-js-v3/issues/3807
-// declare global {
-//   interface ReadableStream {}
-// }
+declare global {
+  interface ReadableStream {}
+}
 
 // We create a global namespace for common variables
 export interface Globals {
-  readonly context: vscode.ExtensionContext
-  outputChannel: vscode.OutputChannel
-  awsContext: AwsContextCommands
-  selectedRegion: string
-  selectedProfile: string
+  readonly context: vscode.ExtensionContext;
+  outputChannel: vscode.OutputChannel;
+  awsContext: AwsContextCommands;
+  selectedRegion: string;
+  selectedProfile: string;
 }
 const globals = {} as Globals;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
   const logger = vscode.window.createOutputChannel("Amazon EMR");
   globals.outputChannel = logger;
 
@@ -35,61 +34,85 @@ export function activate(context: vscode.ExtensionContext) {
   const awsContext = new AwsContextCommands();
   globals.awsContext = awsContext;
 
-  context.subscriptions.push(vscode.commands.registerCommand("emr-tools-v2.selectProfile", async() => {
-    await awsContext.onCommandSetProfile();
-  }));
+  context.subscriptions.push(
+    vscode.commands.registerCommand("emr-tools-v2.selectProfile", async () => {
+      await awsContext.onCommandSetProfile();
+    })
+  );
 
-  context.subscriptions.push(vscode.commands.registerCommand("emr-tools-v2.selectRegion", async() => {
-    await awsContext.onCommandSetRegion();
-  }));
+  context.subscriptions.push(
+    vscode.commands.registerCommand("emr-tools-v2.selectRegion", async () => {
+      await awsContext.onCommandSetRegion();
+    })
+  );
 
   const treeFilter = new EMREC2Filter();
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "emr-tools-v2.filterClusters", async () => {
-        await treeFilter.run();
-      }
-    )
+    vscode.commands.registerCommand("emr-tools-v2.filterClusters", async () => {
+      await treeFilter.run();
+    })
   );
 
   // Tree data providers
-  const emrTools = new EMREC2Provider(vscode.workspace.rootPath + "", treeFilter, logger);
+  const emrTools = new EMREC2Provider(
+    vscode.workspace.rootPath + "",
+    treeFilter,
+    logger
+  );
   vscode.window.registerTreeDataProvider("emrExplorer", emrTools);
   vscode.commands.registerCommand("emr-tools-v2.refreshEntry", () =>
     emrTools.refresh()
   );
-  vscode.commands.registerCommand("emr-tools-v2.connectToCluster", async (cluster: EMRCluster) => {
-    await connectToClusterCommand(cluster);
-  });
+  vscode.commands.registerCommand(
+    "emr-tools-v2.connectToCluster",
+    async (cluster: EMRCluster) => {
+      await connectToClusterCommand(cluster);
+    }
+  );
 
   // EMR on EKS support
   const emrContainerTools = new EMRContainersProvider(globals);
-  vscode.window.registerTreeDataProvider("emrContainersExplorer", emrContainerTools);
+  const emrContainerExplorer = new EMRContainersNode(
+    new DefaultEMRContainersClient(globals)
+  );
+  vscode.window.registerTreeDataProvider(
+    "emrContainersExplorer",
+    emrContainerExplorer
+  );
   vscode.commands.registerCommand("emr-tools-v2.refreshContainerEntry", () =>
-    emrContainerTools.refresh()
+    emrContainerExplorer.refresh()
   );
 
   // EMR Serverless support
   const emrServerlessTools = new EMRServerlessProvider();
-  vscode.window.registerTreeDataProvider("emrServerlessExplorer", emrServerlessTools);
-  vscode.commands.registerCommand("emr-tools-v2.refreshServerlessEntry", () => emrServerlessTools.refresh());
+  vscode.window.registerTreeDataProvider(
+    "emrServerlessExplorer",
+    emrServerlessTools
+  );
+  vscode.commands.registerCommand("emr-tools-v2.refreshServerlessEntry", () =>
+    emrServerlessTools.refresh()
+  );
 
   // Deployment support for all our available options
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "emr-tools-v2.deploy", async () => {
-        await new EMRDeployer(emrTools, emrContainerTools, emrServerlessTools).run();
-      }
-    )
-  );
+  // Removing until future release :)
+  // context.subscriptions.push(
+  //   vscode.commands.registerCommand(
+  //     "emr-tools-v2.deploy", async () => {
+  //       await new EMRDeployer(emrTools, emrContainerTools, emrServerlessTools).run();
+  //     }
+  //   )
+  // );
 
   // Local environment support
   const emrLocalCreator = new EMRLocalEnvironment(context);
   context.subscriptions.push(
-    vscode.commands.registerCommand('emr-tools-v2.localEnvironmentMagic', async () => {
-      await emrLocalCreator.run();
-    }
-  ));
+    vscode.commands.registerCommand(
+      "emr-tools-v2.localEnvironmentMagic",
+      async () => {
+        await emrLocalCreator.run();
+      }
+    )
+  );
 
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated

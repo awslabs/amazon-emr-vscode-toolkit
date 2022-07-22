@@ -11,7 +11,6 @@
   ],
   "activationEvents": [
     "onCommand:emr-tools-v2.helloWorld",
-    "onCommand:emr-tools-v2.deploy",
     "onCommand:emr-tools-v2.localEnvironmentMagic",
     "onCommand:emr-tools-v2.selectProfile",
     "onCommand:emr-tools-v2.selectRegion",
@@ -33,10 +32,6 @@
       {
         "command": "emr-tools-v2.selectRegion",
         "title": "EMR: Select AWS Region"
-      },
-      {
-        "command": "emr-tools-v2.deploy",
-        "title": "EMR: Run Code"
       },
       {
         "command": "emr-tools-v2.localEnvironmentMagic",
