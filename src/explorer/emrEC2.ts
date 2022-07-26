@@ -129,6 +129,7 @@ class EMRStepNode extends vscode.TreeItem {
     this.id = step.id;
     this.description = step.id;
     this.tooltip = step.stateDetails;
+    this.contextValue = "EMRClusterStep";
 
     if (step.state === "FAILED") {
       this.iconPath = {

@@ -129,7 +129,7 @@
         },
         {
           "command": "emr-tools-v2.copyId",
-          "when": "view =~ /^(emrExplorer|emrContainersExplorer)/ && viewItem =~ /^(EMRCluster|EMRVirtualCluster)/",
+          "when": "viewItem =~ /^(EMRCluster|EMRClusterStep|EMRVirtualCluster|EMRVirtualClusterJob|EMRServerlessApplication|EMRServerlessJob)/",
           "group": "0@1"
 
         }

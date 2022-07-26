@@ -42,11 +42,11 @@ export function activate(context: vscode.ExtensionContext) {
   // Allow other modules to access vscode context
   globals.context = context;
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand("emr-tools-v2.selectProfile", async () => {
-      await awsContext.onCommandSetProfile();
-    })
-  );
+  // context.subscriptions.push(
+  //   vscode.commands.registerCommand("emr-tools-v2.selectProfile", async () => {
+  //     await awsContext.onCommandSetProfile();
+  //   })
+  // );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("emr-tools-v2.selectRegion", async () => {
@@ -116,6 +116,13 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.registerCommand("emr-tools-v2.refreshServerlessEntry", () =>
     emrServerlessTools.refresh()
   );
+
+  // When the region changes, refresh all our explorers
+  globals.awsContext.onDidRegionChange((region) => {
+    emrExplorer.refresh();
+    emrContainerExplorer.refresh();
+    emrServerlessTools.refresh();
+  });
 
   // Deployment support for all our available options
   // Removing until future release :)

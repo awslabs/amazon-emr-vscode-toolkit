@@ -1,9 +1,10 @@
 import { DescribeRegionsCommand, EC2Client } from "@aws-sdk/client-ec2";
-import { window } from "vscode";
+import { Event, EventEmitter, window } from "vscode";
 
 export class AwsContextCommands {
   private _profileName: string;
   private _selectedRegion: string;
+  private _onDidRegionChange = new EventEmitter<string>();
 
   public constructor() {
     this._profileName = "default";
@@ -13,6 +14,9 @@ export class AwsContextCommands {
   public getRegion(): string {
     return this._selectedRegion;
   }
+  public get onDidRegionChange(): Event<string> {
+    return this._onDidRegionChange.event;
+}
 
   public getProfileName(): string {
     return this._profileName;
@@ -48,6 +52,7 @@ export class AwsContextCommands {
     }
 
     this._selectedRegion = region;
+    this._onDidRegionChange.fire(region);
   }
 
   public async getRegionFromUser(): Promise<string|undefined> {

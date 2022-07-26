@@ -75,6 +75,7 @@ export class EMRServerlessJob extends vscode.TreeItem {
     this.id = jobRun.id;
     this.description = jobRun.id;
     this.tooltip = jobRun.stateDetails;
+    this.contextValue = "EMRServerlessJob";
 
     if (jobRun.state === "FAILED") {
       this.iconPath = {
