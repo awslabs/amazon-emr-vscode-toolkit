@@ -52,12 +52,12 @@ export class DefaultEMRContainersClient {
     return virtualClusters;
   }
 
-  public async listJobRuns(virtualClusterId: string) {
+  public async listJobRuns(virtualClusterId: string): Promise<JobRun[]> {
     this.globals.outputChannel.appendLine(
       `EMR Containers: Fetching job runs for virtual cluster ${virtualClusterId}.`
     );
     const emr = await this.createEMRContainers();
-    let jobRuns: JobRun[];
+    let jobRuns: JobRun[] = [];
 
     try {
       const result = await emr.send(
@@ -70,7 +70,6 @@ export class DefaultEMRContainersClient {
       vscode.window.showErrorMessage(
         "Error fetching EMR virtual cluster job runs!" + error
       );
-      return [];
     }
 
     return jobRuns;

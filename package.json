@@ -72,6 +72,10 @@
       {
         "command": "emr-tools-v2.filterClusters",
         "title": "Include Cluster States"
+      },
+      {
+        "command": "emr-tools-v2.copyId",
+        "title": "Copy ID"
       }
     ],
     "views": {
@@ -117,6 +121,17 @@
           "command": "emr-tools-v2.connectToCluster",
           "when": "view == emrExplorer && viewItem == EMRCluster",
           "group": "inline@1"
+        },
+        {
+          "command": "emr-tools-v2.connectToCluster",
+          "when": "view == emrExplorer && viewItem == EMRCluster",
+          "group": "0@1"
+        },
+        {
+          "command": "emr-tools-v2.copyId",
+          "when": "view =~ /^(emrExplorer|emrContainersExplorer)/ && viewItem =~ /^(EMRCluster|EMRVirtualCluster)/",
+          "group": "0@1"
+
         }
       ]
     },

@@ -217,12 +217,18 @@ class InstanceNodeTree extends vscode.TreeItem {
 }
 
 export class EMREC2Filter {
+  static defaultStates = [ClusterState.RUNNING, ClusterState.WAITING];
   private _showStates: Set<string>;
+  private _onDidChange = new vscode.EventEmitter<string>();
 
   constructor() {
     // Default set of states
-    this._showStates = new Set([ClusterState.RUNNING, ClusterState.WAITING]);
+    this._showStates = new Set(EMREC2Filter.defaultStates);
   }
+
+  public get onDidChange(): vscode.Event<string> {
+    return this._onDidChange.event;
+}
 
   public async run() {
     // TODO (2022-06-13): Refactor this to All / Active / Terminated / Failed
@@ -266,6 +272,7 @@ export class EMREC2Filter {
     if (!result) { return false; }
 
     this._showStates = new Set(result.map(res => res.state!));
+    this._onDidChange.fire("yolo");
 
     return true;
   }

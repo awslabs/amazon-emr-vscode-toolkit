@@ -51,6 +51,8 @@ export class EMRVirtualClusterNode extends vscode.TreeItem {
   ) {
     super(name, vscode.TreeItemCollapsibleState.Collapsed);
     this.tooltip = `${this.name} (${this.id})`;
+    this.description = this.id;
+    this.contextValue = "EMRVirtualCluster";
   }
 
   getTreeItem(element: EMRVirtualClusterJob): vscode.TreeItem {

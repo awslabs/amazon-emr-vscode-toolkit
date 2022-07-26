@@ -2,12 +2,14 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { AwsContextCommands } from "./aws_context";
+import { DefaultEMRClient } from "./clients/emrClient";
 import { DefaultEMRContainersClient } from "./clients/emrContainersClient";
-import { connectToClusterCommand } from "./emr_connect";
-import { EMRCluster, EMREC2Filter, EMREC2Provider } from "./emr_explorer";
+import { EMREC2Filter } from "./emr_explorer";
 import { EMRLocalEnvironment } from "./emr_local";
 import { EMRServerlessProvider } from "./emr_serverless";
+import { copyIdCommand } from "./explorer/commands";
 import { EMRContainersNode } from "./explorer/emrContainers";
+import { EMRNode } from "./explorer/emrEC2";
 
 // Workaround for https://github.com/aws/aws-sdk-js-v3/issues/3807
 declare global {
@@ -53,25 +55,38 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Tree data providers
-  const emrTools = new EMREC2Provider(
-    vscode.workspace.rootPath + "",
-    treeFilter,
-    logger
-  );
-  vscode.window.registerTreeDataProvider("emrExplorer", emrTools);
+  // EMR on EC2 support
+  const emrExplorer = new EMRNode(new DefaultEMRClient(globals), treeFilter);
+  vscode.window.registerTreeDataProvider("emrExplorer", emrExplorer);
   vscode.commands.registerCommand("emr-tools-v2.refreshEntry", () =>
-    emrTools.refresh()
+    emrExplorer.refresh()
   );
-  vscode.commands.registerCommand(
-    "emr-tools-v2.connectToCluster",
-    async (cluster: EMRCluster) => {
-      await connectToClusterCommand(cluster);
-    }
+
+  // Tree data providers
+  // const emrTools = new EMREC2Provider(
+  //   vscode.workspace.rootPath + "",
+  //   treeFilter,
+  //   logger
+  // );
+  // vscode.window.registerTreeDataProvider("emrExplorer", emrTools);
+  // vscode.commands.registerCommand("emr-tools-v2.refreshEntry", () =>
+  //   emrTools.refresh()
+  // );
+  // vscode.commands.registerCommand(
+  //   "emr-tools-v2.connectToCluster",
+  //   async (cluster: EMRCluster) => {
+  //     await connectToClusterCommand(cluster);
+  //   }
+  // );
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "emr-tools-v2.copyId",
+      async (node: vscode.TreeItem) => await copyIdCommand(node)
+    )
   );
 
   // EMR on EKS support
-  const emrContainerTools = new EMRContainersProvider(globals);
+  // const emrContainerTools = new EMRContainersProvider(globals);
   const emrContainerExplorer = new EMRContainersNode(
     new DefaultEMRContainersClient(globals)
   );
