@@ -3,6 +3,7 @@ import {
   DefaultEMRContainersClient,
   JobRun,
 } from "../clients/emrContainersClient";
+import { globals } from "../extension";
 
 export class EMRContainersNode
   implements vscode.TreeDataProvider<vscode.TreeItem>
@@ -77,12 +78,26 @@ export class EMRVirtualClusterJob extends vscode.TreeItem {
     private readonly virtualClusterId: string,
     private readonly jobRun: JobRun
   ) {
-    const displayName = jobRun.name
-      ? `${jobRun.name} (${jobRun.id})`
-      : jobRun.id!;
-    super(displayName);
+    super(`${jobRun.name || jobRun.id} [${jobRun.state}]`);
     this.id = jobRun.id;
-    this.description = jobRun.state;
+    this.description = jobRun.id;
     this.tooltip = jobRun.stateDetails;
+
+    if (jobRun.state === "FAILED") {
+      this.iconPath = {
+        dark: vscode.Uri.joinPath(
+          globals.context.extensionUri,
+          "resources",
+          "dark",
+          "alert-circle.svg"
+        ),
+        light: vscode.Uri.joinPath(
+          globals.context.extensionUri,
+          "resources",
+          "light",
+          "alert-circle.svg"
+        ),
+      };
+    }
   }
 }

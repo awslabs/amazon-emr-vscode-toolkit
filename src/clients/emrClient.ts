@@ -107,8 +107,8 @@ export class DefaultEMRClient {
     );
 
     try {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       const result = await emr.send(
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         new ListStepsCommand({ ClusterId: clusterId })
       );
       steps = result.Steps

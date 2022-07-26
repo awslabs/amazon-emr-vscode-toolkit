@@ -19,13 +19,15 @@ declare global {
 
 // We create a global namespace for common variables
 export interface Globals {
-  readonly context: vscode.ExtensionContext;
+  context: vscode.ExtensionContext;
   outputChannel: vscode.OutputChannel;
   awsContext: AwsContextCommands;
   selectedRegion: string;
   selectedProfile: string;
 }
 const globals = {} as Globals;
+export {globals};
+
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -36,6 +38,9 @@ export function activate(context: vscode.ExtensionContext) {
   // Allow users to set profile and region
   const awsContext = new AwsContextCommands();
   globals.awsContext = awsContext;
+
+  // Allow other modules to access vscode context
+  globals.context = context;
 
   context.subscriptions.push(
     vscode.commands.registerCommand("emr-tools-v2.selectProfile", async () => {
@@ -151,6 +156,5 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(disposable);
 }
-
 // this method is called when your extension is deactivated
 export function deactivate() {}

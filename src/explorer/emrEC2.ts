@@ -6,6 +6,7 @@ import {
   DefaultEMRClient,
 } from "../clients/emrClient";
 import { EMREC2Filter } from "../emr_explorer";
+import { globals } from "../extension";
 
 export class EMRNode implements vscode.TreeDataProvider<vscode.TreeItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<
@@ -124,10 +125,26 @@ class EMRClusterStepsNode extends vscode.TreeItem {
 
 class EMRStepNode extends vscode.TreeItem {
   constructor(private readonly step: ClusterStep) {
-    const displayName = step.name ? `${step.name} (${step.id})` : step.id;
-    super(displayName);
+    super(`${step.name || step.id} [${step.state}]`);
     this.id = step.id;
+    this.description = step.id;
     this.tooltip = step.stateDetails;
-    this.description = step.state;
+
+    if (step.state === "FAILED") {
+      this.iconPath = {
+        dark: vscode.Uri.joinPath(
+          globals.context.extensionUri,
+          "resources",
+          "dark",
+          "alert-circle.svg"
+        ),
+        light: vscode.Uri.joinPath(
+          globals.context.extensionUri,
+          "resources",
+          "light",
+          "alert-circle.svg"
+        ),
+      };
+    }
   }
 }
