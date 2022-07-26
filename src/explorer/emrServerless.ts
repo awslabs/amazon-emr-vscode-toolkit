@@ -1,78 +1,71 @@
 import * as vscode from "vscode";
 import {
-  DefaultEMRContainersClient,
+  DefaultEMRServerlessClient,
   JobRun,
-} from "../clients/emrContainersClient";
+} from "../clients/emrServerlessClient";
 
-export class EMRContainersNode
+export class EMRServerlessNode
   implements vscode.TreeDataProvider<vscode.TreeItem>
 {
   private _onDidChangeTreeData: vscode.EventEmitter<
-    EMRVirtualClusterNode | undefined | null | void
-  > = new vscode.EventEmitter<
-    EMRVirtualClusterNode | undefined | null | void
-  >();
+    EMRApplicationNode | undefined | null | void
+  > = new vscode.EventEmitter<EMRApplicationNode | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<
-    EMRVirtualClusterNode | undefined | null | void
+    EMRApplicationNode | undefined | null | void
   > = this._onDidChangeTreeData.event;
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
   }
 
-  public constructor(private readonly emr: DefaultEMRContainersClient) {}
+  public constructor(private readonly emr: DefaultEMRServerlessClient) {}
 
-  getTreeItem(element: EMRVirtualClusterNode): vscode.TreeItem {
+  getTreeItem(element: EMRApplicationNode): vscode.TreeItem {
     return element;
   }
 
-  async getChildren(
-    element?: EMRVirtualClusterNode
-  ): Promise<vscode.TreeItem[]> {
+  async getChildren(element?: EMRApplicationNode): Promise<vscode.TreeItem[]> {
     if (element) {
       return Promise.resolve(element.getChildren());
     } else {
-      const virtualClusters = await this.emr.listVirtualClusters();
+      const applications = await this.emr.listApplications();
       return Promise.resolve(
-        virtualClusters.map(
-          (cluster) =>
-            new EMRVirtualClusterNode(cluster.id!, cluster.name!, this.emr)
+        applications.map(
+          (app) => new EMRApplicationNode(app.id!, app.name!, this.emr)
         )
       );
     }
   }
 }
 
-export class EMRVirtualClusterNode extends vscode.TreeItem {
+export class EMRApplicationNode extends vscode.TreeItem {
   constructor(
     public readonly id: string,
     private readonly name: string,
-    private readonly emr: DefaultEMRContainersClient
+    private readonly emr: DefaultEMRServerlessClient
   ) {
     super(name, vscode.TreeItemCollapsibleState.Collapsed);
     this.tooltip = `${this.name} (${this.id})`;
     this.description = this.id;
-    this.contextValue = "EMRVirtualCluster";
+    this.contextValue = "EMRServerlessApplication";
   }
 
-  getTreeItem(element: EMRVirtualClusterJob): vscode.TreeItem {
+  getTreeItem(element: EMRServerlessJob): vscode.TreeItem {
     return element;
   }
 
-  getChildren(
-    element?: EMRVirtualClusterJob
-  ): Thenable<EMRVirtualClusterJob[]> {
+  getChildren(element?: EMRServerlessJob): Thenable<EMRServerlessJob[]> {
     return Promise.resolve(
       this.emr
         .listJobRuns(this.id)
         .then((jobruns) =>
-          jobruns.map((jobRun) => new EMRVirtualClusterJob(this.id, jobRun))
+          jobruns.map((jobRun) => new EMRServerlessJob(this.id, jobRun))
         )
     );
   }
 }
 
-export class EMRVirtualClusterJob extends vscode.TreeItem {
+export class EMRServerlessJob extends vscode.TreeItem {
   constructor(
     private readonly virtualClusterId: string,
     private readonly jobRun: JobRun

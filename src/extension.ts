@@ -4,12 +4,13 @@ import * as vscode from "vscode";
 import { AwsContextCommands } from "./aws_context";
 import { DefaultEMRClient } from "./clients/emrClient";
 import { DefaultEMRContainersClient } from "./clients/emrContainersClient";
+import { DefaultEMRServerlessClient } from "./clients/emrServerlessClient";
 import { EMREC2Filter } from "./emr_explorer";
 import { EMRLocalEnvironment } from "./emr_local";
-import { EMRServerlessProvider } from "./emr_serverless";
 import { copyIdCommand } from "./explorer/commands";
 import { EMRContainersNode } from "./explorer/emrContainers";
 import { EMRNode } from "./explorer/emrEC2";
+import { EMRServerlessNode } from "./explorer/emrServerless";
 
 // Workaround for https://github.com/aws/aws-sdk-js-v3/issues/3807
 declare global {
@@ -99,7 +100,10 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // EMR Serverless support
-  const emrServerlessTools = new EMRServerlessProvider();
+  // const emrServerlessTools = new EMRServerlessProvider();
+  const emrServerlessTools = new EMRServerlessNode(
+    new DefaultEMRServerlessClient(globals)
+  );
   vscode.window.registerTreeDataProvider(
     "emrServerlessExplorer",
     emrServerlessTools
