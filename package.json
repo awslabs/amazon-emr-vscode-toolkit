@@ -10,7 +10,6 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:emr-tools-v2.helloWorld",
     "onCommand:emr-tools-v2.localEnvironmentMagic",
     "onCommand:emr-tools-v2.selectProfile",
     "onCommand:emr-tools-v2.selectRegion",
@@ -21,10 +20,6 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "emr-tools-v2.helloWorld",
-        "title": "Hello World"
-      },
       {
         "command": "emr-tools-v2.selectProfile",
         "title": "EMR: Select AWS Profile"
