@@ -11,15 +11,15 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import path = require("path");
 
-function welcomeText(region: string, accountId: string) {
+function welcomeText(region: string, accountId: string, authType: string) {
+  const envUpdate = (authType === "ENV_FILE") ? "- Update .devcontainer/aws.env with your AWS credentials.\n": "";
   return `# EMR Local Container
 
 ## Getting Started
 
 Thanks for installing your local EMR environment. To get started, there are a few steps.
 
-1. Create a \`.env\` file with your AWS credentials.
-2. Login to ECR with the following command:
+${envUpdate}- Login to ECR with the following command:
 
         aws ecr get-login-password --region ${region} \\
         | docker login \\
@@ -27,7 +27,7 @@ Thanks for installing your local EMR environment. To get started, there are a fe
             --password-stdin \\
             ${accountId}.dkr.ecr.${region}.amazonaws.com
 
-3. Use the \`Remote-Containers: Reopen in Container\` command to build your new environment.
+- Use the \`Remote-Containers: Reopen in Container\` command to build your new environment.
 
 ## Usage tips
 
@@ -58,11 +58,17 @@ export class EMRLocalEnvironment {
       emrRelease: string;
       region: string;
       accountId: string;
+      authType: string;
     }
 
     interface RegionMapping {
       label: string;
       accountId: string;
+    }
+
+    interface AuthOption {
+      label: string;
+      code: string;
     }
 
     interface EMRContainerEntry {
@@ -71,6 +77,7 @@ export class EMRLocalEnvironment {
     }
 
     const emrReleases = [
+      { label: "EMR 6.7.0", releaseVersion: "emr-6.7.0" },
       { label: "EMR 6.6.0", releaseVersion: "emr-6.6.0" },
       { label: "EMR 6.5.0", releaseVersion: "emr-6.5.0" },
       { label: "EMR 6.4.0", releaseVersion: "emr-6.4.0" },
@@ -91,7 +98,7 @@ export class EMRLocalEnvironment {
       const pick = await input.showQuickPick({
         title,
         step: 1,
-        totalSteps: 3,
+        totalSteps: 4,
         placeholder: "Pick a sample job type",
         items: [{ label: "PySpark" }],
         activeItem:
@@ -112,7 +119,7 @@ export class EMRLocalEnvironment {
       const pick = await input.showQuickPick({
         title,
         step: 2,
-        totalSteps: 3,
+        totalSteps: 4,
         placeholder: "Pick an EMR release version",
         items: emrReleases,
         shouldResume: shouldResume,
@@ -147,7 +154,7 @@ export class EMRLocalEnvironment {
       const pick = await input.showQuickPick({
         title,
         step: 3,
-        totalSteps: 3,
+        totalSteps: 4,
         placeholder: "Pick a region to pull the container image from",
         items: regionMapping,
         shouldResume: shouldResume,
@@ -155,6 +162,51 @@ export class EMRLocalEnvironment {
 
       state.region = pick.label;
       state.accountId = (pick as RegionMapping).accountId;
+
+      return (input: MultiStepInput) => pickAuthenticationType(input, state);
+    }
+
+    async function pickAuthenticationType(
+      input: MultiStepInput,
+      state: Partial<State>
+    ) {
+      const areEnvVarsSet =
+        process.env.AWS_ACCESS_KEY_ID !== undefined &&
+        process.env.AWS_SECRET_ACCESS_KEY !== undefined;
+      const authOptions = [
+        {
+          label: "Use existing ~/.aws config",
+          code: "AWS_CONFIG",
+          description: "Mount your ~/.aws directory to the container.",
+        },
+        {
+          label: "Environment Variables",
+          code: "ENV_VAR",
+          description: `If you already have AWS_* environment variables defined.`,
+        },
+        {
+          label: ".env file",
+          code: "ENV_FILE",
+          description: "A sample file will be created for you.",
+        },
+        {
+          label: "None",
+          code: "NONE",
+          description:
+            "Requires you to define credentials yourself in the container",
+        },
+      ];
+
+      const pick = await input.showQuickPick({
+        title,
+        step: 4,
+        totalSteps: 4,
+        placeholder: "Select an authentication mechanism for your container",
+        items: authOptions,
+        shouldResume: shouldResume,
+      });
+
+      state.authType = (pick as AuthOption).code;
     }
 
     function shouldResume() {
@@ -170,14 +222,16 @@ export class EMRLocalEnvironment {
     await this.createDevContainer(
       state.emrRelease,
       state.region,
-      state.accountId
+      state.accountId,
+      state.authType
     );
   }
 
   private async createDevContainer(
     release: string,
     region: string,
-    account: string
+    account: string,
+    authType: string
   ) {
     const stripJSONComments = (data: string) => {
       var re = new RegExp("//(.*)", "g");
@@ -197,6 +251,7 @@ export class EMRLocalEnvironment {
     if (!fs.existsSync(wsPath + "/.devcontainer")) {
       fs.mkdirSync(wsPath + "/.devcontainer");
     }
+    const targetDcPath = vscode.Uri.file(wsPath + "/.devcontainer");
 
     const demoFileName = "emr_tools_demo.py";
     const samplePyspark = this.context.asAbsolutePath(
@@ -206,23 +261,48 @@ export class EMRLocalEnvironment {
     const dcPath = this.context.asAbsolutePath(
       path.join("templates", "devcontainer.json")
     );
+    const envPath = this.context.asAbsolutePath(
+      path.join("templates", "aws.env")
+    );
     const devContainerConfig = JSON.parse(
       stripJSONComments(fs.readFileSync(dcPath).toString())
     );
+    // Update the devcontainer with the requisite release and Image URI details
     devContainerConfig["build"]["args"]["RELEASE"] = release;
     devContainerConfig["build"]["args"]["REGION"] = region;
     devContainerConfig["build"]["args"]["EMR_ACCOUNT_ID"] = account;
+
+    // Depending on auth type, set the corresponding section in the devcontainer
+    if (authType === "AWS_CONFIG") {
+      devContainerConfig["mounts"] = [
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.aws,target=/home/hadoop/.aws,type=bind"
+      ];
+    } else if (authType === "ENV_VAR") {
+      devContainerConfig['containerEnv'] = {
+        ...devContainerConfig['containerEnv'],
+        ...{
+          /* eslint-disable @typescript-eslint/naming-convention */
+          "AWS_ACCESS_KEY_ID": "${localEnv:AWS_ACCESS_KEY_ID}",
+          "AWS_SECRET_ACCESS_KEY": "${localEnv:AWS_SECRET_ACCESS_KEY}",
+          "AWS_SESSION_TOKEN": "${localEnv:AWS_SESSION_TOKEN}",
+          /* eslint-enable @typescript-eslint/naming-convention */
+        }
+      };
+    } else if (authType === "ENV_FILE") {
+      devContainerConfig['runArgs'] = [
+        "--env-file", "${localWorkspaceFolder}/.devcontainer/aws.env"
+      ];
+      fs.copyFileSync(envPath, targetDcPath.fsPath + "/aws.env");
+    }
 
     // TODO (2022-07-22): Optionally, add mounts of ~/.aws exists
     // "source=${env:HOME}${env:USERPROFILE}/.aws,target=/home/hadoop/.aws,type=bind"
     // Also make adding environment credentials optional...they could get exposed in logs
 
-
     const dockerfilePath = this.context.asAbsolutePath(
       path.join("templates", "pyspark.dockerfile")
     );
     const dockerfile = fs.readFileSync(dockerfilePath).toString();
-    const targetDcPath = vscode.Uri.file(wsPath + "/.devcontainer");
 
     fs.writeFileSync(
       targetDcPath.fsPath + "/devcontainer.json",
@@ -231,18 +311,26 @@ export class EMRLocalEnvironment {
     fs.writeFileSync(targetDcPath.fsPath + "/Dockerfile", dockerfile);
     fs.copyFileSync(samplePyspark, wsPath + `/${demoFileName}`);
 
-    var setting: vscode.Uri = vscode.Uri.parse("untitled:" + "emr-local.md");
+    const howtoPath = vscode.Uri.file(wsPath).fsPath + "/emr-local.md";
+    fs.writeFileSync(howtoPath, welcomeText(region, account, authType));
     vscode.workspace
-      .openTextDocument(setting)
+      .openTextDocument(howtoPath)
       .then((a: vscode.TextDocument) => {
-        vscode.window.showTextDocument(a, 1, false).then((e) => {
-          e.edit((edit) => {
-            edit.insert(
-              new vscode.Position(0, 0),
-              welcomeText(region, account)
-            );
-          });
-        });
+        vscode.window.showTextDocument(a, 1, false);
       });
+
+    // var setting: vscode.Uri = vscode.Uri.parse("untitled:" + "emr-local.md");
+    // vscode.workspace
+    //   .openTextDocument(setting)
+    //   .then((a: vscode.TextDocument) => {
+    //     vscode.window.showTextDocument(a, 1, false).then((e) => {
+    //       e.edit((edit) => {
+    //         edit.insert(
+    //           new vscode.Position(0, 0),
+    //           welcomeText(region, account)
+    //         );
+    //       });
+    //     });
+    //   });
   }
 }

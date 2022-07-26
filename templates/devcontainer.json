@@ -29,7 +29,7 @@
       "PYTHONPATH": "/usr/lib/spark/python/lib/py4j-src.zip:/usr/lib/spark/python"
     },
   
-    "runArgs": ["--env-file", "${localWorkspaceFolder}/.env"],
+    // "runArgs": ["--env-file", "${localWorkspaceFolder}/.env"],
   
     // "postStartCommand": "if [ ! -v AWS_REGION ]; then export AWS_REGION=us-east-1; fi",
     // This unfortunately runs as the hadoop user, so doesn't quite work
