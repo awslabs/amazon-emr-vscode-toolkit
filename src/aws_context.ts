@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 import { DescribeRegionsCommand, EC2Client } from "@aws-sdk/client-ec2";
 import { Event, EventEmitter, window } from "vscode";
 

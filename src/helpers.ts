@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 // -------------------------------------------------------
 // Helper code that wraps the API for the multi-step case.
 // -------------------------------------------------------

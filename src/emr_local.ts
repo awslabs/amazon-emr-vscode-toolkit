@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 // We want folks to be able to developer EMR jobs locally.
 // We give them an option to create an EMR environment
 // They select:

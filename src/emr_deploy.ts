@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 // We can package and deploy EMR jobs
 // EMR on EC2
 // - Optionally package into (virtualenv|container)

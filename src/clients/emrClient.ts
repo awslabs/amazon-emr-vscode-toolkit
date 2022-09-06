@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 import * as vscode from "vscode";
 import { Globals } from "../extension";
 import {
@@ -6,7 +9,6 @@ import {
   ListClustersCommand,
   ListStepsCommand,
 } from "@aws-sdk/client-emr";
-import { IdFormat } from "@aws-sdk/client-ec2";
 import { EMREC2Filter } from "../emr_explorer";
 
 export interface Cluster {
