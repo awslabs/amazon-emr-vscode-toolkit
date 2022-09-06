@@ -45,3 +45,11 @@ I'm looking for feedback in a few different areas:
 - Does the tool work as expected for browsing your EMR resources
 - Do you find the devcontainer useful for local development
 - What functionality is missing that you would like to see
+
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+
+## License
+
+This project is licensed under the Apache-2.0 License.
