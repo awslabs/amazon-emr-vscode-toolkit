@@ -33,6 +33,7 @@ Full list of features:
     - Pack pom into jar file
 - Link to open logs in S3 or CloudWatch
 - Testing :) https://vscode.rocks/testing/
+- Jupyter support (ipykernel, sparkmagic, gcc/python3-devel/krb5)
 
 
 ## Feedback Notes
