@@ -168,25 +168,30 @@ export class EMRServerlessDeploy {
       });
     }
 
-
     const state = await collectInputs();
 
-    const detail = `Entry point: ${state.s3TargetURI}${basename(state.srcScriptURI)}\nApplication ID: ${state.applicationID}\nJob Role: ${state.jobRoleARN}`;
+    const detail = `Entry point: ${state.s3TargetURI}${basename(
+      state.srcScriptURI
+    )}\nApplication ID: ${state.applicationID}\nJob Role: ${state.jobRoleARN}`;
 
     const confirmDeployment = await vscode.window
-      .showInformationMessage("Confirm EMR Serverless deployment", {modal:true, detail}, "Yes")
+      .showInformationMessage(
+        "Confirm EMR Serverless deployment",
+        { modal: true, detail },
+        "Yes"
+      )
       .then((answer) => {
         return answer === "Yes";
       });
 
-      if (confirmDeployment) {
-        await this.deploy(
-          state.applicationID,
-          state.jobRoleARN,
-          state.srcScriptURI,
-          state.s3TargetURI
-        );
-      }
+    if (confirmDeployment) {
+      await this.deploy(
+        state.applicationID,
+        state.jobRoleARN,
+        state.srcScriptURI,
+        state.s3TargetURI
+      );
+    }
     // Do I do a "deploy" and "run "
   }
 
