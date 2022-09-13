@@ -4,10 +4,13 @@
 import * as vscode from "vscode";
 import {
   EMRServerlessClient,
+  JobDriver,
   JobRunSummary,
   ListApplicationsCommand,
   ListJobRunsCommand,
   StartJobRunCommand,
+  StartJobRunCommandInput,
+  StartJobRunRequest,
 } from "@aws-sdk/client-emr-serverless";
 import { Globals } from "../extension";
 
@@ -76,4 +79,34 @@ export class DefaultEMRServerlessClient {
     
         return jobRuns;
       }
+  
+    public async startJobRun(applicationId: string, executionRoleARN: string, entryPoint: string): Promise<JobRun> {
+      this.globals.outputChannel.appendLine(
+        `EMR Serverless: Starting job run (${applicationId}).`
+      );
+
+      const emr = await this.createEMRServerless();
+      let jobRun: JobRun = {};
+
+      let jobRunParams: StartJobRunCommandInput = {
+        applicationId,
+        executionRoleArn: executionRoleARN,
+        jobDriver: {
+          sparkSubmit: {entryPoint: entryPoint}
+        }
+      };
+
+      try {
+        const result = await emr.send(
+          new StartJobRunCommand(jobRunParams)
+        );
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          "There was an error running the EMR Serverless job:" + error
+        );
+      }
+
+
+      return jobRun;
+    }
 }

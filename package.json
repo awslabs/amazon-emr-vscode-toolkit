@@ -18,6 +18,7 @@
   ],
   "activationEvents": [
     "onCommand:emr-tools-v2.localEnvironmentMagic",
+    "onCommand:emr-tools-v2.deployEMRServerless",
     "onCommand:emr-tools-v2.selectRegion",
     "onView:emrExplorer",
     "onView:emrContainersExplorer",
