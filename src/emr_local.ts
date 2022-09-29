@@ -267,6 +267,10 @@ export class EMRLocalEnvironment {
     const envPath = this.context.asAbsolutePath(
       path.join("templates", "aws.env")
     );
+    // TODO: Don't implement this yet - we wouldn't want to overwrite a .gitignore
+    const gitIgnorePath = this.context.asAbsolutePath(
+      path.join("templates", "_.gitignore")
+    );
     const devContainerConfig = JSON.parse(
       stripJSONComments(fs.readFileSync(dcPath).toString())
     );
@@ -274,6 +278,9 @@ export class EMRLocalEnvironment {
     devContainerConfig["build"]["args"]["RELEASE"] = release;
     devContainerConfig["build"]["args"]["REGION"] = region;
     devContainerConfig["build"]["args"]["EMR_ACCOUNT_ID"] = account;
+
+    // This is useful to prevent EC2 Metadata errors as well as allows pyspark in Jupyter to work
+    devContainerConfig["containerEnv"]["AWS_REGION"] = region;
 
     // Depending on auth type, set the corresponding section in the devcontainer
     if (authType === "AWS_CONFIG") {
