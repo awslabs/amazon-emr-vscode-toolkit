@@ -3,7 +3,7 @@
 
 import * as vscode from "vscode";
 import { Globals } from "../extension";
-import { S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 export class DefaultS3Client {
   public constructor(private readonly globals: Globals) {}
@@ -14,17 +14,19 @@ export class DefaultS3Client {
     });
   }
 
-  public async uploadFile(bucket: string, key: string): Promise<undefined> {
-    this.globals.outputChannel.appendLine(`S3: Uploading file to ${bucket}.`);
+  public async uploadFile(bucket: string, key: string, body: Buffer): Promise<undefined> {
+    this.globals.outputChannel.appendLine(`S3: Uploading file to ${bucket}/${key}`);
     const s3 = await this.createS3();
 
+    const params = {
+      Bucket: bucket,
+      Key: key,
+      Body: body,
+    };
+
     try {
-      //   const result = await emr.send(
-      //     new ListJobRunsCommand({
-      //       applicationId: applicationId,
-      //     })
-      //   );
-      //   jobRuns = result.jobRuns ?? [];
+      const results = await s3.send(new PutObjectCommand(params));
+      this.globals.outputChannel.appendLine(`S3: Upload complete.`);
     } catch (error) {
       vscode.window.showErrorMessage("Error uploading file to S3!" + error);
     }

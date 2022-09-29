@@ -128,10 +128,11 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   const s3Client = new DefaultS3Client(globals);
+  const emrServerlessDeployer = new EMRServerlessDeploy(context, emrServerlessClient, s3Client);
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "emr-tools-v2.deployEMRServerless", async() => {
-        await new EMRServerlessDeploy(context, emrServerlessClient, s3Client).run();
+        await emrServerlessDeployer.run();
       }
     )
   );

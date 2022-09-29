@@ -32,10 +32,28 @@ import { basename } from "path";
 // - call StartJobRunCommand
 
 // - open explorer view ;)
+
+
+interface State {
+  title: string;
+  step: number;
+  totalSteps: number;
+  resourceGroup: QuickPickItem | string;
+
+  s3TargetURI: string;
+  applicationID: string;
+  jobRoleARN: string;
+  s3LogTargetURI: string;
+  srcScriptURI: string;
+}
 export class EMRServerlessDeploy {
   context: vscode.ExtensionContext;
+  title: string;
   previousAppID: string | undefined;
   previousS3TargetURI: string | undefined;
+  previousJobRoleARN: string | undefined;
+
+  
 
   constructor(
     context: vscode.ExtensionContext,
@@ -43,132 +61,132 @@ export class EMRServerlessDeploy {
     private readonly s3: DefaultS3Client
   ) {
     this.context = context;
+    this.title = "Deploy to EMR Serverless";
 
     this.previousAppID = undefined;
     this.previousS3TargetURI = undefined;
+    this.previousJobRoleARN = undefined;
+  }
+
+
+
+  async collectInputs() {
+    const state = {} as Partial<State>;
+    await MultiStepInput.run((input) => this.insertS3TargetURI(input, state));
+    return state as State;
+  }
+
+
+
+  async insertS3TargetURI(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    let defaultTarget = "s3://bucket-name/prefix/";
+    if (this.previousS3TargetURI) {
+      defaultTarget = this.previousS3TargetURI;
+    }
+    const pick = await input.showInputBox({
+      title: this.title,
+      step: 1,
+      totalSteps: 4,
+      value: defaultTarget,
+      prompt: "Provide an S3 URI where you want to upload your code.",
+      validate: this.validateBucketURI,
+      shouldResume: this.shouldResume,
+    });
+
+    state.s3TargetURI = pick.valueOf();
+    this.previousS3TargetURI = state.s3TargetURI;
+    return (input: MultiStepInput) => this.insertJobRoleARN(input, state);
+  }
+
+  async insertJobRoleARN(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    let defaultJobRole = this.previousJobRoleARN  ? this.previousJobRoleARN : "arn:aws:iam::xxx:role/job-role";
+    const pick = await input.showInputBox({
+      title: this.title,
+      step: 2,
+      totalSteps: 4,
+      value: defaultJobRole,
+      prompt:
+        "Provide an IAM Role that has access to the resources for your job.",
+      validate: this.validateJobRole,
+      shouldResume: this.shouldResume,
+      ignoreFocusOut: true,
+    });
+
+    state.jobRoleARN = pick.valueOf();
+    this.previousJobRoleARN = state.jobRoleARN;
+    return (input: MultiStepInput) => this.selectApplicationID(input, state);
+  }
+
+  async selectApplicationID(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    let defaultAppId = this.previousAppID  ? this.previousAppID : "00f3aabbccdd123";
+    // TODO: Populate the list of application IDs automatically
+    const pick = await input.showInputBox({
+      title: this.title,
+      step: 2,
+      totalSteps: 4,
+      value: defaultAppId,
+      prompt: "Provide the EMR Serverless Application ID.",
+      validate: this.validateApplicationID,
+      shouldResume: this.shouldResume,
+      ignoreFocusOut: true,
+    });
+
+    state.applicationID = pick.valueOf();
+    this.previousAppID = state.applicationID;
+    return (input: MultiStepInput) => this.selectSourceFile(input, state);
+  }
+
+  async selectSourceFile(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    const uri = await pickFile("Type the filename with your source code.");
+    if (uri) {
+      state.srcScriptURI = uri.fsPath;
+    }
+  }
+
+  async validateBucketURI(uri: string): Promise<string | undefined> {
+    if (!uri.startsWith("s3://")) {
+      return "S3 location must start with s3://";
+    }
+    return undefined;
+  }
+
+  async validateJobRole(uri: string): Promise<string | undefined> {
+    if (!uri.startsWith("arn:aws:iam::")) {
+      return "Job role must be a full ARN: arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>";
+    }
+    return undefined;
+  }
+
+  async validateApplicationID(
+    appId: string
+  ): Promise<string | undefined> {
+    if (appId.length !== 16) {
+      return "Provide just the Application ID, like 00f3ranvrvchl625";
+    }
+    return undefined;
+  }
+
+  shouldResume() {
+    // Could show a notification with the option to resume.
+    return new Promise<boolean>((resolve, reject) => {
+      // noop
+    });
   }
 
   public async run() {
-    const title = "Deploy to EMR Serverless";
-
-    interface State {
-      title: string;
-      step: number;
-      totalSteps: number;
-      resourceGroup: QuickPickItem | string;
-
-      s3TargetURI: string;
-      applicationID: string;
-      jobRoleARN: string;
-      s3LogTargetURI: string;
-      srcScriptURI: string;
-    }
-
-    async function collectInputs() {
-      const state = {} as Partial<State>;
-      await MultiStepInput.run((input) => insertS3TargetURI(input, state));
-      return state as State;
-    }
-
-    async function insertS3TargetURI(
-      input: MultiStepInput,
-      state: Partial<State>
-    ) {
-      const pick = await input.showInputBox({
-        title,
-        step: 1,
-        totalSteps: 4,
-        value: "s3://bucket-name/prefix/",
-        prompt: "s3://bucket-name/prefix/",
-        validate: validateBucketURI,
-        shouldResume: shouldResume,
-      });
-
-      state.s3TargetURI = pick.valueOf();
-      return (input: MultiStepInput) => insertJobRoleARN(input, state);
-    }
-
-    async function insertJobRoleARN(
-      input: MultiStepInput,
-      state: Partial<State>
-    ) {
-      const pick = await input.showInputBox({
-        title,
-        step: 2,
-        totalSteps: 4,
-        value: "arn:aws:iam:xxx:blah",
-        prompt:
-          "Provide an IAM Role that has access to the resources for your job.",
-        validate: validateJobRole,
-        shouldResume: shouldResume,
-        ignoreFocusOut: true,
-      });
-
-      state.jobRoleARN = pick.valueOf();
-      return (input: MultiStepInput) => selectApplicationID(input, state);
-    }
-
-    async function selectApplicationID(
-      input: MultiStepInput,
-      state: Partial<State>
-    ) {
-      // TODO: Populate the list of application IDs automatically
-      const pick = await input.showInputBox({
-        title,
-        step: 2,
-        totalSteps: 4,
-        value: "00f3ranvrvchl625",
-        prompt: "Provide the EMR Serverless Application ID.",
-        validate: validateApplicationID,
-        shouldResume: shouldResume,
-        ignoreFocusOut: true,
-      });
-
-      state.applicationID = pick.valueOf();
-      return (input: MultiStepInput) => selectSourceFile(input, state);
-    }
-
-    async function selectSourceFile(
-      input: MultiStepInput,
-      state: Partial<State>
-    ) {
-      const uri = await pickFile("Type the filename with your source code.");
-      if (uri) {
-        state.srcScriptURI = uri.fsPath;
-      }
-    }
-
-    async function validateBucketURI(uri: string): Promise<string | undefined> {
-      if (!uri.startsWith("s3://")) {
-        return "S3 location must start with s3://";
-      }
-      return undefined;
-    }
-
-    async function validateJobRole(uri: string): Promise<string | undefined> {
-      if (!uri.startsWith("arn:aws:iam::")) {
-        return "Job role must be a full ARN: arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>";
-      }
-      return undefined;
-    }
-
-    async function validateApplicationID(
-      appId: string
-    ): Promise<string | undefined> {
-      if (appId.length !== 16) {
-        return "Provide just the Application ID, like 00f3ranvrvchl625";
-      }
-      return undefined;
-    }
-
-    function shouldResume() {
-      // Could show a notification with the option to resume.
-      return new Promise<boolean>((resolve, reject) => {
-        // noop
-      });
-    }
-
-    const state = await collectInputs();
+    const state = await this.collectInputs();
 
     const detail = `Entry point: ${state.s3TargetURI}${basename(
       state.srcScriptURI
@@ -192,7 +210,7 @@ export class EMRServerlessDeploy {
         state.s3TargetURI
       );
     }
-    // Do I do a "deploy" and "run "
+    // Do I do a "deploy" and "run"
   }
 
   private async deploy(
@@ -201,10 +219,16 @@ export class EMRServerlessDeploy {
     sourceFile: string,
     s3TargetURI: string
   ) {
-    // this.s3.uploadFile();
-    // this.emr.startJobRun()
-    console.log(
-      "Your job has been started, refresh the EMR Serverless view to keep an eye on it."
-    );
+    const data = fs.readFileSync(sourceFile);
+    const bucketName = s3TargetURI.split("/")[2];
+    const key = s3TargetURI.split("/").slice(3).join("/");
+    const fullS3Key = `${key.replace(/\/$/, '')}/${basename(sourceFile)}`;
+    const fullS3Path = `s3://${bucketName}/${fullS3Key}`;
+
+    await this.s3.uploadFile(bucketName, fullS3Key, data);
+    
+    this.emr.startJobRun(applicationID, executionRoleARN,fullS3Path);
+
+    vscode.window.showInformationMessage("Your job has been submitted, refresh the EMR Serverless view to keep an eye on it.");
   }
 }
