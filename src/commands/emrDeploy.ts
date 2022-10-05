@@ -94,6 +94,7 @@ export class EMRServerlessDeploy {
       prompt: "Provide an S3 URI where you want to upload your code.",
       validate: this.validateBucketURI,
       shouldResume: this.shouldResume,
+      ignoreFocusOut: true,
     });
 
     state.s3TargetURI = pick.valueOf();
