@@ -128,7 +128,7 @@ export class EMRServerlessDeploy {
     input: MultiStepInput,
     state: Partial<State>
   ) {
-    let defaultAppId = this.previousAppID  ? this.previousAppID : "00f3aabbccdd123";
+    let defaultAppId = this.previousAppID  ? this.previousAppID : "00f3aabbccdd1234";
     // TODO: Populate the list of application IDs automatically
     const pick = await input.showInputBox({
       title: this.title,
