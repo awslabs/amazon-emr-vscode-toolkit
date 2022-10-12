@@ -8,6 +8,7 @@ import {
   JobRunSummary,
   ListApplicationsCommand,
   ListJobRunsCommand,
+  ListJobRunsRequest,
   StartJobRunCommand,
   StartJobRunCommandInput,
   StartJobRunRequest,
@@ -63,20 +64,25 @@ export class DefaultEMRServerlessClient {
         );
         const emr = await this.createEMRServerless();
         let jobRuns: JobRun[] = [];
+        let request: ListJobRunsRequest = {
+          applicationId: applicationId,
+        };
     
         try {
-          const result = await emr.send(
-            new ListJobRunsCommand({
-              applicationId: applicationId,
-            })
-          );
-          jobRuns = result.jobRuns ?? [];
+          do {
+            const result = await emr.send(new ListJobRunsCommand(request));
+            jobRuns = jobRuns.concat(result.jobRuns ?? []);
+            if (!result.nextToken || jobRuns.length >= 100) {
+              break;
+            }
+            request['nextToken'] = result.nextToken;
+          } while (request['nextToken']);
         } catch (error) {
           vscode.window.showErrorMessage(
             "Error fetching EMR application job runs!" + error
           );
         }
-    
+
         return jobRuns;
       }
   
