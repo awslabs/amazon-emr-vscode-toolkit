@@ -59,8 +59,6 @@ export class DefaultGlueClient {
                 DatabaseName: databaseName,
             };
 
-            // Note that this requires aws-sdk<=v3.30.0
-            // due to https://github.com/aws/aws-sdk-js-v3/issues/3511
             const result = await glue.send(new GetTablesCommand(input));
             
             tables = result.TableList ?? [];
