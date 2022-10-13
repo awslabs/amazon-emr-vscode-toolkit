@@ -75,7 +75,8 @@ export class GlueCatalogTable extends vscode.TreeItem {
   constructor(
     private readonly gluetable: Table
   ) {
-    super(`${gluetable.Name} v:${gluetable.VersionId}`);
+    super(`${gluetable.Name}`);
+    this.description = `v${gluetable.VersionId}`;
     this.contextValue = "GlueCatalogTable";
     this.id = `${gluetable.Name} ${gluetable.DatabaseName}`;
     this.tooltip = gluetable.VersionId;
