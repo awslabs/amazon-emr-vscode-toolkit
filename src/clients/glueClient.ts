@@ -78,7 +78,7 @@ export class DefaultGlueClient {
     public async getTable(tableName: string, databaseName: string): Promise<Table | undefined>{
 
         this.globals.outputChannel.appendLine(
-            `Glue Catalog: Fetching tables of databse ${databaseName} from ${this.globals.awsContext.getRegion()} region.`
+            `Glue Catalog: Fetching tables of database ${databaseName} from ${this.globals.awsContext.getRegion()} region.`
         );
         const glue = await this.createGlueClient();
         let table: Table | undefined;
