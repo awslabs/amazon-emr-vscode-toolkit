@@ -30,8 +30,6 @@ export class DefaultGlueClient {
         const glue = await this.createGlueClient();
         let databases;
         try {
-            // Note that this requires aws-sdk<=v3.30.0
-            // due to https://github.com/aws/aws-sdk-js-v3/issues/3511
             const result = await glue.send(new GetDatabasesCommand({}));
 
             databases = result.DatabaseList ?? [];
