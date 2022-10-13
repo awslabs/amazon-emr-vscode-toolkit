@@ -16,7 +16,7 @@ import { EMRContainersNode } from "./explorer/emrContainers";
 import { EMRNode } from "./explorer/emrEC2";
 import { EMRServerlessNode } from "./explorer/emrServerless";
 import { GlueCatalogNode } from "./explorer/glueCatalog";
-import { getWebviewContent, GlueTablePanel } from "./panels/glueTablePanel";
+import { getWebviewContent } from "./panels/glueTablePanel";
 
 
 // Workaround for https://github.com/aws/aws-sdk-js-v3/issues/3807
