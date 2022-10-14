@@ -73,6 +73,9 @@ You can deploy and run a single PySpark file on EMR Serverless with the **EMR Se
 - **EMR Serverless Application ID** - The ID of an existing EMR Serverless Spark application
 - **Filename** - The name of the local PySpark file you want to run on EMR Serverless
 
+https://user-images.githubusercontent.com/1512/195953681-4e7e7102-4974-45b1-a695-195e91d45124.mp4
+
+
 ## Future Considerations
 
 - Allow for the ability to select different profiles
