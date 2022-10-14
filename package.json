@@ -21,7 +21,8 @@
     "onCommand:emr-tools-v2.selectRegion",
     "onView:emrExplorer",
     "onView:emrContainersExplorer",
-    "onView:emrServerlessExplorer"
+    "onView:emrServerlessExplorer",
+    "onView:glueCatalogExplorer"
   ],
   "main": "./out/main.js",
   "contributes": {
@@ -59,12 +60,24 @@
         }
       },
       {
+        "command": "emr-tools-v2.refreshGlueCatalog",
+        "title": "Glue Catalog: Refresh",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
+      },
+      {
         "command": "emr-tools-v2.filterClusters",
         "title": "Include Cluster States"
       },
       {
         "command": "emr-tools-v2.copyId",
         "title": "Copy ID"
+      },
+      {
+        "command": "emr-tools-v2.viewGlueTable",
+        "title": "View Glue Table"
       }
     ],
     "views": {
@@ -80,6 +93,10 @@
         {
           "id": "emrServerlessExplorer",
           "name": "EMR Serverless"
+        },
+        {
+          "id": "glueCatalogExplorer",
+          "name": "Glue Catalog Explorer"
         }
       ]
     },
@@ -101,6 +118,11 @@
           "group": "navigation"
         },
         {
+          "command": "emr-tools-v2.refreshGlueCatalog",
+          "when": "view == glueCatalogExplorer",
+          "group": "navigation"
+        },
+        {
           "command": "emr-tools-v2.filterClusters",
           "when": "view == emrExplorer"
         }
@@ -110,6 +132,11 @@
           "command": "emr-tools-v2.copyId",
           "when": "viewItem =~ /^(EMRCluster|EMRClusterStep|EMRVirtualCluster|EMRVirtualClusterJob|EMRServerlessApplication|EMRServerlessJob)/",
           "group": "0@1"
+        },
+        {
+          "command": "emr-tools-v2.viewGlueTable",
+          "when": "viewItem =~ /^GlueCatalogTable/",
+          "group": "0@2"
         }
       ]
     },
@@ -154,6 +181,7 @@
     "@aws-sdk/client-emr": "3.30.0",
     "@aws-sdk/client-emr-containers": "3.30.0",
     "@aws-sdk/client-emr-serverless": "3.105.0",
+    "@aws-sdk/client-glue": "^3.181.0",
     "@aws-sdk/client-ssm": "^3.95.0",
     "@aws-sdk/shared-ini-file-loader": "3.127.0"
   }
