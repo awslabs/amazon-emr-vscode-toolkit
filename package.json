@@ -183,6 +183,7 @@
     "@aws-sdk/client-emr-serverless": "3.105.0",
     "@aws-sdk/client-glue": "^3.181.0",
     "@aws-sdk/client-ssm": "^3.95.0",
-    "@aws-sdk/shared-ini-file-loader": "3.127.0"
+    "@aws-sdk/shared-ini-file-loader": "3.127.0",
+    "@vscode/codicons": "^0.0.32"
   }
 }
