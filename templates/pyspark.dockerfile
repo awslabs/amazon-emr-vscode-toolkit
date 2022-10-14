@@ -33,11 +33,6 @@ RUN yum install -y git unzip && \
      ./aws/install && \
      rm -rf aws awscliv2.zip
 
-# Install ripgrep for file selection
-RUN sudo curl -o "/etc/yum.repos.d/rg.repo" \
-     https://copr.fedorainfracloud.org/coprs/carlwgeorge/ripgrep/repo/epel-7/carlwgeorge-ripgrep-epel-7.repo && \
-     sudo yum install -y ripgrep
-
 # Enable Jupyter notebooks
 RUN python3 -m pip install -U pip ipykernel
 
