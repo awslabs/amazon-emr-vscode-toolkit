@@ -132,7 +132,7 @@ export class EMRServerlessDeploy {
     // TODO: Populate the list of application IDs automatically
     const pick = await input.showInputBox({
       title: this.title,
-      step: 2,
+      step: 3,
       totalSteps: 4,
       value: defaultAppId,
       prompt: "Provide the EMR Serverless Application ID.",
