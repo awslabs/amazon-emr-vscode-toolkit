@@ -3,11 +3,13 @@
 
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
+import path = require("path");
 import * as vscode from "vscode";
 import { AwsContextCommands } from "./aws_context";
 import { DefaultEMRClient } from "./clients/emrClient";
 import { DefaultEMRContainersClient } from "./clients/emrContainersClient";
 import { DefaultEMRServerlessClient } from "./clients/emrServerlessClient";
+import { DefaultGlueClient } from "./clients/glueClient";
 import { DefaultS3Client } from "./clients/s3Client";
 import { EMRServerlessDeploy } from "./commands/emrDeploy";
 import { EMREC2Filter } from "./emr_explorer";
@@ -16,6 +18,9 @@ import { copyIdCommand } from "./explorer/commands";
 import { EMRContainersNode } from "./explorer/emrContainers";
 import { EMRNode } from "./explorer/emrEC2";
 import { EMRServerlessNode } from "./explorer/emrServerless";
+import { GlueCatalogNode } from "./explorer/glueCatalog";
+import { getWebviewContent } from "./panels/glueTablePanel";
+
 
 // Workaround for https://github.com/aws/aws-sdk-js-v3/issues/3807
 declare global {
@@ -94,6 +99,21 @@ export function activate(context: vscode.ExtensionContext) {
       async (node: vscode.TreeItem) => await copyIdCommand(node)
     )
   );
+  
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "emr-tools-v2.viewGlueTable",
+      async (node: vscode.TreeItem) => {
+        const panel = vscode.window.createWebviewPanel(
+        "glue-table", node.id!.split(" ").reverse().join("."),
+        vscode.ViewColumn.One,
+        {
+          enableScripts: true,
+        });
+
+      panel.webview.html = await getWebviewContent(node, new DefaultGlueClient(globals), context.extensionUri, panel.webview);}
+    )
+  );
 
   // EMR on EKS support
   // const emrContainerTools = new EMRContainersProvider(globals);
@@ -106,6 +126,19 @@ export function activate(context: vscode.ExtensionContext) {
   );
   vscode.commands.registerCommand("emr-tools-v2.refreshContainerEntry", () =>
     emrContainerExplorer.refresh()
+  );
+
+  // Glue support
+  const glueCatalogExplorer = new GlueCatalogNode(
+    new DefaultGlueClient(globals)
+  );
+  vscode.window.registerTreeDataProvider(
+    "glueCatalogExplorer",
+    glueCatalogExplorer
+  );
+
+  vscode.commands.registerCommand("emr-tools-v2.refreshGlueCatalog", () =>
+    glueCatalogExplorer.refresh()
   );
 
   // EMR Serverless support
@@ -125,6 +158,7 @@ export function activate(context: vscode.ExtensionContext) {
     emrExplorer.refresh();
     emrContainerExplorer.refresh();
     emrServerlessTools.refresh();
+    glueCatalogExplorer.refresh();
   });
 
   const s3Client = new DefaultS3Client(globals);
