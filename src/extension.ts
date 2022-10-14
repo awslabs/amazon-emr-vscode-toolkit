@@ -10,6 +10,8 @@ import { DefaultEMRClient } from "./clients/emrClient";
 import { DefaultEMRContainersClient } from "./clients/emrContainersClient";
 import { DefaultEMRServerlessClient } from "./clients/emrServerlessClient";
 import { DefaultGlueClient } from "./clients/glueClient";
+import { DefaultS3Client } from "./clients/s3Client";
+import { EMRServerlessDeploy } from "./commands/emrDeploy";
 import { EMREC2Filter } from "./emr_explorer";
 import { EMRLocalEnvironment } from "./emr_local";
 import { copyIdCommand } from "./explorer/commands";
@@ -141,9 +143,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   // EMR Serverless support
   // const emrServerlessTools = new EMRServerlessProvider();
-  const emrServerlessTools = new EMRServerlessNode(
-    new DefaultEMRServerlessClient(globals)
-  );
+  const emrServerlessClient = new DefaultEMRServerlessClient(globals);
+  const emrServerlessTools = new EMRServerlessNode(emrServerlessClient);
   vscode.window.registerTreeDataProvider(
     "emrServerlessExplorer",
     emrServerlessTools
@@ -159,6 +160,16 @@ export function activate(context: vscode.ExtensionContext) {
     emrServerlessTools.refresh();
     glueCatalogExplorer.refresh();
   });
+
+  const s3Client = new DefaultS3Client(globals);
+  const emrServerlessDeployer = new EMRServerlessDeploy(context, emrServerlessClient, s3Client);
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "emr-tools-v2.deployEMRServerless", async() => {
+        await emrServerlessDeployer.run();
+      }
+    )
+  );
 
   // Deployment support for all our available options
   // Removing until future release :)

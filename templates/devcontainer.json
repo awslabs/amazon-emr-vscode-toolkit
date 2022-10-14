@@ -26,7 +26,8 @@
     },
   
     "remoteEnv": {
-      "PYTHONPATH": "/usr/lib/spark/python/lib/py4j-src.zip:/usr/lib/spark/python"
+      "PYTHONPATH": "/usr/lib/spark/python/lib/py4j-src.zip:/usr/lib/spark/python",
+      "PATH": "${containerEnv:PATH}:/home/hadoop/.local/bin"
     },
   
     // "runArgs": ["--env-file", "${localWorkspaceFolder}/.env"],
@@ -43,7 +44,7 @@
     },
   
     // Add the IDs of extensions you want installed when the container is created.
-    "extensions": ["ms-python.python"],
+    "extensions": ["ms-python.python", "ms-python.black-formatter"],
   
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     "forwardPorts": [18080]

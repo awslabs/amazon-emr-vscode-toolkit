@@ -11,7 +11,13 @@ FROM ${EMR_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/spark/${RELEASE}:${RELEAS
 USER root
 
 # Update Spark config for local development
-RUN echo -e "spark.submit.deployMode\tclient\nspark.master\tlocal[*]\nspark.hadoop.fs.s3.customAWSCredentialsProvider\tcom.amazonaws.auth.EnvironmentVariableCredentialsProvider" >> /etc/spark/conf/spark-defaults.conf
+RUN echo -e "spark.submit.deployMode\tclient\nspark.master\tlocal[*]\nspark.hadoop.fs.s3.customAWSCredentialsProvider\tcom.amazonaws.auth.EnvironmentVariableCredentialsProvider\n" >> /etc/spark/conf/spark-defaults.conf
+
+# Use the Glue Data Catalog
+RUN echo -e "\n# Enable Glue Data Catalog\nspark.sql.catalogImplementation\thive\nspark.hadoop.hive.metastore.client.factory.class\tcom.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory\n" >> /etc/spark/conf/spark-defaults.conf
+
+# Configure log4j to ignore EC2 metadata access failure-related error messages
+RUN echo -e "\n\nlog4j.logger.com.amazonaws.internal.InstanceMetadataServiceResourceFetcher=FATAL\nlog4j.logger.com.amazonaws.util.EC2MetadataUtils=FATAL" >> /etc/spark/conf/log4j.properties
 
 # Don't log INFO messages to the console 
 RUN sed -i s/log4j.rootCategory=.*/log4j.rootCategory=WARN,console/ /etc/spark/conf/log4j.properties
@@ -21,11 +27,14 @@ RUN yum install -y sudo && \
      echo "hadoop ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Upgrade to AWS CLI v2
-RUN yum install -y unzip && \
+RUN yum install -y git unzip && \
      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
      unzip awscliv2.zip && \
      ./aws/install && \
      rm -rf aws awscliv2.zip
+
+# Enable Jupyter notebooks
+RUN python3 -m pip install -U pip ipykernel
 
 # Switch back to the default user
 USER hadoop:hadoop
