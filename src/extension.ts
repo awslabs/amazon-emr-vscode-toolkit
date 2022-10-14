@@ -3,6 +3,7 @@
 
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
+import path = require("path");
 import * as vscode from "vscode";
 import { AwsContextCommands } from "./aws_context";
 import { DefaultEMRClient } from "./clients/emrClient";
@@ -100,14 +101,15 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "emr-tools-v2.viewGlueTable",
-      async (node: vscode.TreeItem) => {const panel = vscode.window.createWebviewPanel(
-        "glue-table", node.id!,
+      async (node: vscode.TreeItem) => {
+        const panel = vscode.window.createWebviewPanel(
+        "glue-table", node.id!.split(" ").reverse().join("."),
         vscode.ViewColumn.One,
         {
-          enableScripts: true
+          enableScripts: true,
         });
 
-      panel.webview.html = await getWebviewContent(node, new DefaultGlueClient(globals));}
+      panel.webview.html = await getWebviewContent(node, new DefaultGlueClient(globals), context.extensionUri, panel.webview);}
     )
   );
 
