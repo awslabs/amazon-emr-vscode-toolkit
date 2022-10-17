@@ -4,6 +4,7 @@ ARG RELEASE="emr-6.6.0"
 ARG RELEASE_TAG="latest"
 ARG REGION="us-west-2"
 ARG EMR_ACCOUNT_ID="895885662937"
+ARG TARGETARCH
 
 FROM ${EMR_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/spark/${RELEASE}:${RELEASE_TAG}
 
@@ -33,8 +34,14 @@ RUN yum install -y git unzip && \
      ./aws/install && \
      rm -rf aws awscliv2.zip
 
+# ipykernel depends on pusutil, which does not publish wheels for aarch64
+RUN if [ "$TARGETARCH" != "amd64" ]; then yum install -y gcc python3-devel; fi
+
+# Upgrade pip first
+RUN python3 -m pip install -U pip
+
 # Enable Jupyter notebooks
-RUN python3 -m pip install -U pip ipykernel
+RUN python3 -m pip install ipykernel
 
 # Switch back to the default user
 USER hadoop:hadoop
