@@ -3,7 +3,7 @@
   "displayName": "Amazon EMR Toolkit",
   "publisher": "AmazonEMR",
   "description": "The extension for developers building Spark applications to run in EMR clusters.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "preview": true,
   "icon": "resources/emr-icon.png",
   "repository": {
