@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.3.0 (Developer Preview) - 2022-10-18
+
+### Bug Fixes
+
+- Fix container build on M1 Macs
+
 ## 0.2.0 (Developer Preview) - 2022-10-10
 
 ### Features
