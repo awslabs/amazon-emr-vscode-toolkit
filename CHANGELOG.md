@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.4.0 (Developer Preview) - 2022-11-28
+
+### Features
+
+- Add EMR 6.8.0 [#13](https://github.com/awslabs/amazon-emr-vscode-toolkit/issues/13)
+
+### Bug Fixes
+
+- Install arm64 version of AWS CLI [#15](https://github.com/awslabs/amazon-emr-vscode-toolkit/issues/15)
+- Fix icons in Gluet table views [#7](https://github.com/awslabs/amazon-emr-vscode-toolkit/issues/7)
+
 ## 0.3.0 (Developer Preview) - 2022-10-18
 
 ### Bug Fixes
