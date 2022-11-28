@@ -28,8 +28,8 @@ RUN yum install -y sudo && \
      echo "hadoop ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Upgrade to AWS CLI v2
-RUN yum install -y git unzip && \
-     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+RUN yum install -y git unzip
+RUN if [ "$TARGETARCH" = "arm64" ]; then curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"; else curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"; fi && \
      unzip awscliv2.zip && \
      ./aws/install && \
      rm -rf aws awscliv2.zip
