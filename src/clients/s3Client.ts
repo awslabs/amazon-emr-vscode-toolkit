@@ -9,9 +9,7 @@ export class DefaultS3Client {
   public constructor(private readonly globals: Globals) {}
 
   private async createS3(): Promise<S3Client> {
-    return new S3Client({
-      region: this.globals.awsContext.getRegion(),
-    });
+    return new S3Client(this.globals.awsContext.getClientConfig());
   }
 
   public async uploadFile(bucket: string, key: string, body: Buffer): Promise<undefined> {

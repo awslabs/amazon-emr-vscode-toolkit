@@ -37,12 +37,16 @@ export class EMRContainersNode
       return Promise.resolve(element.getChildren());
     } else {
       const virtualClusters = await this.emr.listVirtualClusters();
-      return Promise.resolve(
-        virtualClusters.map(
-          (cluster) =>
-            new EMRVirtualClusterNode(cluster.id!, cluster.name!, this.emr)
-        )
-      );
+      if (virtualClusters.length ===0) {
+        return Promise.resolve([new vscode.TreeItem("No virtual clusters found")]);;
+      } else {
+        return Promise.resolve(
+          virtualClusters.map(
+            (cluster) =>
+              new EMRVirtualClusterNode(cluster.id!, cluster.name!, this.emr)
+          )
+        );
+      }
     }
   }
 }

@@ -20,6 +20,7 @@
     "onCommand:emr-tools-v2.localEnvironmentMagic",
     "onCommand:emr-tools-v2.deployEMRServerless",
     "onCommand:emr-tools-v2.selectRegion",
+    "onCommand:emr-tools-v2.selectProfile",
     "onView:emrExplorer",
     "onView:emrContainersExplorer",
     "onView:emrServerlessExplorer",
@@ -31,6 +32,10 @@
       {
         "command": "emr-tools-v2.selectRegion",
         "title": "EMR: Select AWS Region"
+      },
+      {
+        "command": "emr-tools-v2.selectProfile",
+        "title": "EMR: Select AWS Profile"
       },
       {
         "command": "emr-tools-v2.localEnvironmentMagic",
@@ -186,7 +191,9 @@
     "@aws-sdk/client-glue": "^3.181.0",
     "@aws-sdk/client-s3": "^3.168.0",
     "@aws-sdk/client-ssm": "^3.95.0",
+    "@aws-sdk/credential-providers": "^3.256.0",
     "@aws-sdk/shared-ini-file-loader": "3.127.0",
+    "@aws-sdk/types": "^3.254.0",
     "@vscode/codicons": "^0.0.32"
   }
 }

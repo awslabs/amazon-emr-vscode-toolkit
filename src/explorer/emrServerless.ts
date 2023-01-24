@@ -33,11 +33,15 @@ export class EMRServerlessNode
       return Promise.resolve(element.getChildren());
     } else {
       const applications = await this.emr.listApplications();
-      return Promise.resolve(
-        applications.map(
-          (app) => new EMRApplicationNode(app.id!, app.name!, this.emr)
-        )
-      );
+      if (applications.length === 0) {
+        return Promise.resolve([new vscode.TreeItem("No applications found")]);;
+      } else {
+        return Promise.resolve(
+          applications.map(
+            (app) => new EMRApplicationNode(app.id!, app.name!, this.emr)
+          )
+        );
+      }
     }
   }
 }

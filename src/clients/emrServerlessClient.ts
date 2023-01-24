@@ -32,9 +32,7 @@ export class DefaultEMRServerlessClient {
     public constructor(private readonly globals: Globals) {}
 
     private async createEMRServerless(): Promise<EMRServerlessClient> {
-        return new EMRServerlessClient({
-            region: this.globals.awsContext.getRegion(),
-        });
+        return new EMRServerlessClient(this.globals.awsContext.getClientConfig());
     }
 
     public async listApplications(): Promise<Application[]> {

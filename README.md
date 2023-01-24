@@ -21,6 +21,8 @@ EMR Toolkit is a VS Code Extension to make it easier to develop Spark jobs on EM
 
 The Amazon EMR Explorer allows you to browse job runs and steps across EMR on EC2, EMR on EKS, and EMR Serverless. To see the Explorer, choose the EMR icon in the Activity bar.
 
+> **Note**: If you do not have default AWS credentials or `AWS_PROFILE` environment variable, use the `EMR: Select AWS Profile` command to select your profile.
+
 ![](images/emr-explorer.png)
 
 ### Glue Catalog Explorer
