@@ -12,19 +12,16 @@ interface ClientConfig {
   credentials?: AwsCredentialIdentityProvider;
 }
 
-const DEFAULT_PROFILE_NAME = 'default';
-const DEFAULT_REGION = 'us-east-1';
+const DEFAULT_PROFILE_NAME = "default";
+const DEFAULT_REGION = "us-east-1";
 
 export class AwsContextCommands {
   private _profileName?: string;
-  private _selectedRegion: string;
+  private _selectedRegion?: string;
   private _onDidRegionChange = new EventEmitter<string>();
   private _onDidConfigChange = new EventEmitter<void>();
 
-  public constructor() {
-    this._profileName;
-    this._selectedRegion = "us-east-1";
-  }
+  public constructor() {}
 
   public getClientConfig(): ClientConfig {
     let clientConfig: ClientConfig = { region: this.getRegion() };
@@ -33,9 +30,6 @@ export class AwsContextCommands {
     if (this.getProfileName()) {
       const _profile = this.getProfileName()!;
       clientConfig.credentials = fromIni({ profile: _profile });
-
-      // Leaving out automatic region selection for now as it gets a little complex
-      // clientConfig.region = (await loadSharedConfigFiles()).configFile?.[_profile]?.region!;
     }
 
     return clientConfig;
@@ -45,7 +39,16 @@ export class AwsContextCommands {
   }
 
   public getRegion(): string {
-    return this._selectedRegion;
+    // Determine the region in this order
+    // 1. Region set explicity by user or derived from their profile
+    // 2. Region defined in environment variables
+    // 3. Default region
+    return (
+      this._selectedRegion ||
+      process.env.AWS_REGION ||
+      process.env.AWS_DEFAULT_REGION ||
+      DEFAULT_REGION
+    );
   }
   public get onDidRegionChange(): Event<string> {
     return this._onDidRegionChange.event;
@@ -62,8 +65,15 @@ export class AwsContextCommands {
       return;
     }
 
+    // See if a region is defined in their profile
+    const region = (await loadSharedConfigFiles()).configFile?.[profileName]
+      ?.region;
+    if (region) {
+      console.log("Region found in profile: " + region);
+      this._selectedRegion = region;
+    }
+
     this._profileName = profileName;
-    // AWS.config.credentials = new SharedIniFileCredentials({ profile: profileName });
     console.log("Setting profile to", profileName);
     this._onDidConfigChange.fire();
   }
@@ -94,7 +104,11 @@ export class AwsContextCommands {
     const command = new DescribeRegionsCommand({});
     const response = await client.send(command);
     if (!response) {
-      return;
+      const result = await window.showInputBox({
+        title: "Set your desired AWS Region",
+        placeHolder: "us-east-1",
+      });
+      return result;
     }
 
     const regionNames: string[] = response.Regions
