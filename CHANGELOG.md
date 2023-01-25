@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.5.0 (Developer Preview) - 2023-01-24
+
+### Features
+
+- Add EMR 6.9.0 [#16](https://github.com/awslabs/amazon-emr-vscode-toolkit/issues/16)
+- Add ability to select AWS profile from within extension
+
 ## 0.4.0 (Developer Preview) - 2022-11-28
 
 ### Features
