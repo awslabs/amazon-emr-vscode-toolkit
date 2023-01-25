@@ -34,12 +34,17 @@ export class GlueCatalogNode
       return Promise.resolve(element.getChildren());
     } else {
       const glueDatabases = await this.glue.listDatabases();
-      return Promise.resolve(
-        glueDatabases.map(
-          (glueDatabase: Database) =>
-            new GlueCatalogDatabaseNode(glueDatabase.Name!, this.glue)
-        )
-      );
+      if (glueDatabases.length === 0) {
+        return Promise.resolve([new vscode.TreeItem("No databases found")]);;
+      } else {
+        return Promise.resolve(
+          glueDatabases.map(
+            (glueDatabase: Database) =>
+              new GlueCatalogDatabaseNode(glueDatabase.Name!, this.glue)
+          )
+        );
+      }
+
     }
   }
 }

@@ -34,9 +34,7 @@ export class DefaultEMRClient {
   public constructor(private readonly globals: Globals) {}
 
   private async createEMR(): Promise<EMR> {
-    return new EMR({
-      region: this.globals.awsContext.getRegion(),
-    });
+    return new EMR(this.globals.awsContext.getClientConfig());
   }
 
   public async listClusters(stateFilter?: EMREC2Filter): Promise<Cluster[]> {

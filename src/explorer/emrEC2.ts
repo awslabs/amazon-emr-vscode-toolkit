@@ -36,20 +36,21 @@ export class EMRNode implements vscode.TreeDataProvider<vscode.TreeItem> {
     return element;
   }
 
-  getChildren(element?: EMRClusterNode): Promise<vscode.TreeItem[]> {
+  async getChildren(element?: EMRClusterNode): Promise<vscode.TreeItem[]> {
     if (element) {
       return Promise.resolve(element.getChildren());
     } else {
-      return Promise.resolve(
-        this.emr
-          .listClusters(this.stateFilter)
-          .then((clusters) =>
-            clusters.map(
-              (cluster) =>
-                new EMRClusterNode(cluster.id!, cluster.name!, this.emr)
-            )
+      const clusters = await this.emr.listClusters(this.stateFilter);
+      if (clusters.length === 0) {
+        return Promise.resolve([new vscode.TreeItem("No clusters found")]);
+      } else {
+        return Promise.resolve(
+          clusters.map(
+            (cluster) =>
+              new EMRClusterNode(cluster.id!, cluster.name!, this.emr)
           )
-      );
+        );
+      }
     }
   }
 }

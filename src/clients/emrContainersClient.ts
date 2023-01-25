@@ -27,9 +27,7 @@ export class DefaultEMRContainersClient {
   public constructor(private readonly globals: Globals) {}
 
   private async createEMRContainers(): Promise<EMRContainersClient> {
-    return new EMRContainersClient({
-      region: this.globals.awsContext.getRegion(),
-    });
+    return new EMRContainersClient(this.globals.awsContext.getClientConfig());
   }
 
   public async listVirtualClusters(): Promise<VirtualCluster[]> {

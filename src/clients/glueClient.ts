@@ -18,9 +18,7 @@ export class DefaultGlueClient {
     public constructor(private readonly globals: Globals) { }
 
     private async createGlueClient(): Promise<GlueClient> {
-        return new GlueClient({
-            region: this.globals.awsContext.getRegion(),
-        });
+        return new GlueClient(this.globals.awsContext.getClientConfig());
     }
 
     public async listDatabases(): Promise<Database[]> {
@@ -47,7 +45,7 @@ export class DefaultGlueClient {
     public async listTables(databaseName: string): Promise<Table[]> {
 
         this.globals.outputChannel.appendLine(
-            `Glue Catalog: Fetching tables of databse ${databaseName} from ${this.globals.awsContext.getRegion()} region.`
+            `Glue Catalog: Fetching tables of database ${databaseName} from ${this.globals.awsContext.getRegion()} region.`
         );
         const glue = await this.createGlueClient();
         let tables: Table[];
@@ -78,7 +76,7 @@ export class DefaultGlueClient {
     public async getTable(tableName: string, databaseName: string): Promise<Table | undefined>{
 
         this.globals.outputChannel.appendLine(
-            `Glue Catalog: Fetching tables of database ${databaseName} from ${this.globals.awsContext.getRegion()} region.`
+            `Glue Catalog: Fetching table of database ${databaseName} from ${this.globals.awsContext.getRegion()} region.`
         );
         const glue = await this.createGlueClient();
         let table: Table | undefined;
