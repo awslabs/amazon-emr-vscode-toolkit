@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.5.2 - 2023-02-01
+
+### Bug Fixes
+
+- Fix fallback if region selection fails
+
+## 0.5.1 (Developer Preview) - 2023-01-25
+
+### Features
+
+- Infer region from selected profile
+
 ## 0.5.0 (Developer Preview) - 2023-01-24
 
 ### Features

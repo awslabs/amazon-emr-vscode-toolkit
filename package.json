@@ -4,7 +4,7 @@
   "publisher": "AmazonEMR",
   "description": "The extension for developers building Spark applications to run in EMR clusters.",
   "version": "0.5.1",
-  "preview": true,
+  "preview": false,
   "icon": "resources/emr-icon.png",
   "repository": {
     "type": "git",

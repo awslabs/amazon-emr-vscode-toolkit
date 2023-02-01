@@ -102,21 +102,28 @@ export class AwsContextCommands {
   public async getRegionFromUser(): Promise<string | undefined> {
     const client = new EC2Client({});
     const command = new DescribeRegionsCommand({});
-    const response = await client.send(command);
-    if (!response) {
-      const result = await window.showInputBox({
+    try {
+      const response = await client.send(command);
+      if (!response) {
+        return await window.showInputBox({
+          title: "Set your desired AWS Region",
+          placeHolder: "us-east-1",
+        });
+      }
+
+      const regionNames: string[] = response.Regions
+        ? response.Regions.map((r) => r.RegionName!)
+        : [];
+      const result = await window.showQuickPick(regionNames, {
+        placeHolder: "Select AWS Region",
+      });
+      return result;
+    } catch (err) {
+      console.log("Error fetching regions: ", err);
+      return await window.showInputBox({
         title: "Set your desired AWS Region",
         placeHolder: "us-east-1",
       });
-      return result;
     }
-
-    const regionNames: string[] = response.Regions
-      ? response.Regions.map((r) => r.RegionName!)
-      : [];
-    const result = await window.showQuickPick(regionNames, {
-      placeHolder: "Select AWS Region",
-    });
-    return result;
   }
 }
