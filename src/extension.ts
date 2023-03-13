@@ -109,6 +109,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.ViewColumn.One,
         {
           enableScripts: true,
+          enableFindWidget: true
         });
 
       panel.webview.html = await getWebviewContent(node, new DefaultGlueClient(globals), context.extensionUri, panel.webview);}
