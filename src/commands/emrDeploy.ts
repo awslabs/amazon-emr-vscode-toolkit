@@ -46,11 +46,15 @@ interface State {
   s3LogTargetURI: string;
   srcScriptURI: string;
 }
+
+const TOTAL_STEPS = 5;
+
 export class EMRServerlessDeploy {
   context: vscode.ExtensionContext;
   title: string;
   previousAppID: string | undefined;
   previousS3TargetURI: string | undefined;
+  previousS3LogTargetURI: string | undefined;
   previousJobRoleARN: string | undefined;
 
   
@@ -65,6 +69,7 @@ export class EMRServerlessDeploy {
 
     this.previousAppID = undefined;
     this.previousS3TargetURI = undefined;
+    this.previousS3LogTargetURI = undefined;
     this.previousJobRoleARN = undefined;
   }
 
@@ -89,7 +94,7 @@ export class EMRServerlessDeploy {
     const pick = await input.showInputBox({
       title: this.title,
       step: 1,
-      totalSteps: 4,
+      totalSteps: TOTAL_STEPS,
       value: defaultTarget,
       prompt: "Provide an S3 URI where you want to upload your code.",
       validate: this.validateBucketURI,
@@ -99,6 +104,34 @@ export class EMRServerlessDeploy {
 
     state.s3TargetURI = pick.valueOf();
     this.previousS3TargetURI = state.s3TargetURI;
+    return (input: MultiStepInput) => this.insertS3LogTargetURI(input, state);
+  }
+
+
+  async insertS3LogTargetURI(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    let defaultTarget = "s3://bucket-name/logs/";
+    if (this.previousS3LogTargetURI !== undefined) {
+      defaultTarget = this.previousS3LogTargetURI;
+    } else if (state.s3TargetURI) {
+      let codeBucket = this.extractBucketName(state.s3TargetURI!);
+      defaultTarget = `s3://${codeBucket}/logs/`;
+    }
+    const pick = await input.showInputBox({
+      title: this.title,
+      step: 2,
+      totalSteps: TOTAL_STEPS,
+      value: defaultTarget,
+      prompt: "Provide an S3 URI for Spark logs (leave blank to disable).",
+      validate: this.validateOptionalBucketURI.bind(this),
+      shouldResume: this.shouldResume,
+      ignoreFocusOut: true,
+    });
+
+    state.s3LogTargetURI = pick.valueOf();
+    this.previousS3LogTargetURI = state.s3LogTargetURI;
     return (input: MultiStepInput) => this.insertJobRoleARN(input, state);
   }
 
@@ -109,8 +142,8 @@ export class EMRServerlessDeploy {
     let defaultJobRole = this.previousJobRoleARN  ? this.previousJobRoleARN : "arn:aws:iam::xxx:role/job-role";
     const pick = await input.showInputBox({
       title: this.title,
-      step: 2,
-      totalSteps: 4,
+      step: 3,
+      totalSteps: TOTAL_STEPS,
       value: defaultJobRole,
       prompt:
         "Provide an IAM Role that has access to the resources for your job.",
@@ -132,8 +165,8 @@ export class EMRServerlessDeploy {
     // TODO: Populate the list of application IDs automatically
     const pick = await input.showInputBox({
       title: this.title,
-      step: 3,
-      totalSteps: 4,
+      step: 4,
+      totalSteps: TOTAL_STEPS,
       value: defaultAppId,
       prompt: "Provide the EMR Serverless Application ID.",
       validate: this.validateApplicationID,
@@ -156,11 +189,23 @@ export class EMRServerlessDeploy {
     }
   }
 
+  async validateOptionalBucketURI(uri: string): Promise<string | undefined> {
+    if (uri === "" || uri === undefined) {
+      return undefined;
+    }
+
+    return this.validateBucketURI(uri);
+  }
+
   async validateBucketURI(uri: string): Promise<string | undefined> {
     if (!uri.startsWith("s3://")) {
       return "S3 location must start with s3://";
     }
     return undefined;
+  }
+
+  extractBucketName(uri: string): string {
+    return uri.split("/")[2];
   }
 
   async validateJobRole(uri: string): Promise<string | undefined> {
@@ -208,7 +253,8 @@ export class EMRServerlessDeploy {
         state.applicationID,
         state.jobRoleARN,
         state.srcScriptURI,
-        state.s3TargetURI
+        state.s3TargetURI,
+        state.s3LogTargetURI,
       );
     }
     // Do I do a "deploy" and "run"
@@ -218,7 +264,8 @@ export class EMRServerlessDeploy {
     applicationID: string,
     executionRoleARN: string,
     sourceFile: string,
-    s3TargetURI: string
+    s3TargetURI: string,
+    s3LogTargetURI: string,
   ) {
     const data = fs.readFileSync(sourceFile);
     const bucketName = s3TargetURI.split("/")[2];
@@ -228,7 +275,7 @@ export class EMRServerlessDeploy {
 
     await this.s3.uploadFile(bucketName, fullS3Key, data);
     
-    this.emr.startJobRun(applicationID, executionRoleARN,fullS3Path);
+    this.emr.startJobRun(applicationID, executionRoleARN,fullS3Path, s3LogTargetURI);
 
     vscode.window.showInformationMessage("Your job has been submitted, refresh the EMR Serverless view to keep an eye on it.");
   }

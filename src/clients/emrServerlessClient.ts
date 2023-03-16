@@ -84,7 +84,7 @@ export class DefaultEMRServerlessClient {
         return jobRuns;
       }
   
-    public async startJobRun(applicationId: string, executionRoleARN: string, entryPoint: string): Promise<JobRun> {
+    public async startJobRun(applicationId: string, executionRoleARN: string, entryPoint: string, logPrefix: string): Promise<JobRun> {
       this.globals.outputChannel.appendLine(
         `EMR Serverless: Starting job run (${applicationId}).`
       );
@@ -99,6 +99,14 @@ export class DefaultEMRServerlessClient {
           sparkSubmit: {entryPoint: entryPoint}
         }
       };
+
+      if (logPrefix) {
+        jobRunParams.configurationOverrides = {
+          monitoringConfiguration: {
+            s3MonitoringConfiguration: {logUri: logPrefix}
+          }
+        };
+      }
 
       try {
         const result = await emr.send(
