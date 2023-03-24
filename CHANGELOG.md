@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.6.0 - 2023-03-24
+
+### Features
+
+- Add EMR 6.10.0 [#24](https://github.com/awslabs/amazon-emr-vscode-toolkit/issues/24)
+- Add support for logging in EMR Serverless jobs [#20](https://github.com/awslabs/amazon-emr-vscode-toolkit/issues/20)
+- Allow search in Glue Table details window [#19](https://github.com/awslabs/amazon-emr-vscode-toolkit/issues/19)
+- Add support to run jobs on EMR on EC2 [#11](https://github.com/awslabs/amazon-emr-vscode-toolkit/issues/11)
+
 ## 0.5.2 - 2023-02-01
 
 ### Bug Fixes
