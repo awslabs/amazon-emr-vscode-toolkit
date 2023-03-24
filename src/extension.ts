@@ -11,6 +11,7 @@ import { DefaultEMRContainersClient } from "./clients/emrContainersClient";
 import { DefaultEMRServerlessClient } from "./clients/emrServerlessClient";
 import { DefaultGlueClient } from "./clients/glueClient";
 import { DefaultS3Client } from "./clients/s3Client";
+import { EMREC2Deploy } from "./commands/deploy/emrEC2Deploy";
 import { EMRServerlessDeploy } from "./commands/emrDeploy";
 import { EMREC2Filter } from "./emr_explorer";
 import { EMRLocalEnvironment } from "./emr_local";
@@ -71,7 +72,8 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // EMR on EC2 support
-  const emrExplorer = new EMRNode(new DefaultEMRClient(globals), treeFilter);
+  const emrEC2Client = new DefaultEMRClient(globals);
+  const emrExplorer = new EMRNode(emrEC2Client, treeFilter);
   vscode.window.registerTreeDataProvider("emrExplorer", emrExplorer);
   vscode.commands.registerCommand("emr-tools-v2.refreshEntry", () =>
     emrExplorer.refresh()
@@ -171,6 +173,15 @@ export function activate(context: vscode.ExtensionContext) {
       }
     )
   );
+
+  const emrEC2Deployer = new EMREC2Deploy(context, emrEC2Client, s3Client);
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "emr-tools-v2.deployEMREC2",async() => {
+        await emrEC2Deployer.run();
+      }
+    )
+  )
 
   // Deployment support for all our available options
   // Removing until future release :)

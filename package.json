@@ -19,6 +19,7 @@
   "activationEvents": [
     "onCommand:emr-tools-v2.localEnvironmentMagic",
     "onCommand:emr-tools-v2.deployEMRServerless",
+    "onCommand:emr-tools-v2.deployEMREC2",
     "onCommand:emr-tools-v2.selectRegion",
     "onCommand:emr-tools-v2.selectProfile",
     "onView:emrExplorer",
@@ -44,6 +45,10 @@
       {
         "command": "emr-tools-v2.deployEMRServerless",
         "title": "EMR Serverless: Run job"
+      },
+      {
+        "command": "emr-tools-v2.deployEMREC2",
+        "title": "EMR on EC2: Run job"
       },
       {
         "command": "emr-tools-v2.refreshEntry",
