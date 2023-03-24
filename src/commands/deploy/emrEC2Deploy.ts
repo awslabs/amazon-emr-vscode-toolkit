@@ -1,0 +1,280 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+// We want folks to be able to developer EMR jobs locally.
+// We give them an option to create an EMR environment
+// They select:
+// - Type of job (pyspark, scala, SQL)
+// - EMR Release (only those supported by EMR on EKS)
+// - Region (used to build the local Image URI)
+
+import { QuickPickItem } from "vscode";
+import { MultiStepInput } from "./../../helpers";
+import * as fs from "fs";
+import * as vscode from "vscode";
+import {
+  DefaultEMRClient,
+  ClusterStep,
+} from "../../clients/emrClient";
+import { DefaultS3Client } from "../../clients/s3Client";
+import { pickFile } from "../../utils/quickPickItem";
+import { basename } from "path";
+
+// Step 1, add EMR Deploy option for EMR on EC2
+// Command: "EMR on EC2: Deploy and start step"
+// Process:
+// - Ask for (and save):
+//     - S3 bucket/prefix for code location
+//     - IAM Job Role ARN (todo)
+// - Copy main entry script to S3
+// - call StartJobRunCommand
+
+
+interface State {
+  title: string;
+  step: number;
+  totalSteps: number;
+  resourceGroup: QuickPickItem | string;
+
+  s3TargetURI: string;
+  clusterID: string;
+  jobRoleARN: string;
+  s3LogTargetURI: string;
+  srcScriptURI: string;
+}
+
+const TOTAL_STEPS = 3;
+
+export class EMREC2Deploy {
+  context: vscode.ExtensionContext;
+  title: string;
+  previousClusterID: string | undefined;
+  previousS3TargetURI: string | undefined;
+  previousS3LogTargetURI: string | undefined;
+  previousJobRoleARN: string | undefined;
+
+  
+
+  constructor(
+    context: vscode.ExtensionContext,
+    private readonly emr: DefaultEMRClient,
+    private readonly s3: DefaultS3Client
+  ) {
+    this.context = context;
+    this.title = "Deploy to EMR on EC2";
+
+    this.previousClusterID = undefined;
+    this.previousS3TargetURI = undefined;
+    this.previousS3LogTargetURI = undefined;
+    this.previousJobRoleARN = undefined;
+  }
+
+
+
+  async collectInputs() {
+    const state = {} as Partial<State>;
+    await MultiStepInput.run((input) => this.insertS3TargetURI(input, state));
+    return state as State;
+  }
+
+
+
+  async insertS3TargetURI(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    let defaultTarget = "s3://bucket-name/prefix/";
+    if (this.previousS3TargetURI) {
+      defaultTarget = this.previousS3TargetURI;
+    }
+    const pick = await input.showInputBox({
+      title: this.title,
+      step: 1,
+      totalSteps: TOTAL_STEPS,
+      value: defaultTarget,
+      prompt: "Provide an S3 URI where you want to upload your code.",
+      validate: this.validateBucketURI,
+      shouldResume: this.shouldResume,
+      ignoreFocusOut: true,
+    });
+
+    state.s3TargetURI = pick.valueOf();
+    this.previousS3TargetURI = state.s3TargetURI;
+    return (input: MultiStepInput) => this.selectClusterID(input, state);
+  }
+
+
+  async insertS3LogTargetURI(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    let defaultTarget = "s3://bucket-name/logs/";
+    if (this.previousS3LogTargetURI !== undefined) {
+      defaultTarget = this.previousS3LogTargetURI;
+    } else if (state.s3TargetURI) {
+      let codeBucket = this.extractBucketName(state.s3TargetURI!);
+      defaultTarget = `s3://${codeBucket}/logs/`;
+    }
+    const pick = await input.showInputBox({
+      title: this.title,
+      step: 2,
+      totalSteps: TOTAL_STEPS,
+      value: defaultTarget,
+      prompt: "Provide an S3 URI for Spark logs (leave blank to disable).",
+      validate: this.validateOptionalBucketURI.bind(this),
+      shouldResume: this.shouldResume,
+      ignoreFocusOut: true,
+    });
+
+    state.s3LogTargetURI = pick.valueOf();
+    this.previousS3LogTargetURI = state.s3LogTargetURI;
+    return (input: MultiStepInput) => this.selectClusterID(input, state);
+  }
+
+  async insertJobRoleARN(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    let defaultJobRole = this.previousJobRoleARN  ? this.previousJobRoleARN : "arn:aws:iam::xxx:role/job-role";
+    const pick = await input.showInputBox({
+      title: this.title,
+      step: 3,
+      totalSteps: TOTAL_STEPS,
+      value: defaultJobRole,
+      prompt:
+        "Provide an IAM Role that has access to the resources for your job.",
+      validate: this.validateJobRole,
+      shouldResume: this.shouldResume,
+      ignoreFocusOut: true,
+    });
+
+    state.jobRoleARN = pick.valueOf();
+    this.previousJobRoleARN = state.jobRoleARN;
+    return (input: MultiStepInput) => this.selectClusterID(input, state);
+  }
+
+  async selectClusterID(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    let defaultClusterId = this.previousClusterID  ? this.previousClusterID : "j-AABBCCDD00112";
+    // TODO: Populate the list of cluster IDs automatically
+    const pick = await input.showInputBox({
+      title: this.title,
+      step: 2,
+      totalSteps: TOTAL_STEPS,
+      value: defaultClusterId,
+      prompt: "Provide the EMR Cluster ID.",
+      validate: this.validateClusterID,
+      shouldResume: this.shouldResume,
+      ignoreFocusOut: true,
+    });
+
+    state.clusterID = pick.valueOf();
+    this.previousClusterID = state.clusterID;
+    return (input: MultiStepInput) => this.selectSourceFile(input, state);
+  }
+
+  async selectSourceFile(
+    input: MultiStepInput,
+    state: Partial<State>
+  ) {
+    const uri = await pickFile("Type the filename with your source code.");
+    if (uri) {
+      state.srcScriptURI = uri.fsPath;
+    }
+  }
+
+  async validateOptionalBucketURI(uri: string): Promise<string | undefined> {
+    if (uri === "" || uri === undefined) {
+      return undefined;
+    }
+
+    return this.validateBucketURI(uri);
+  }
+
+  async validateBucketURI(uri: string): Promise<string | undefined> {
+    if (!uri.startsWith("s3://")) {
+      return "S3 location must start with s3://";
+    }
+    return undefined;
+  }
+
+  extractBucketName(uri: string): string {
+    return uri.split("/")[2];
+  }
+
+  async validateJobRole(uri: string): Promise<string | undefined> {
+    if (!uri.startsWith("arn:aws:iam::")) {
+      return "Job role must be a full ARN: arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>";
+    }
+    return undefined;
+  }
+
+  async validateClusterID(
+    clusterId: string
+  ): Promise<string | undefined> {
+    if (!clusterId.startsWith("j-")) {
+        return "Cluster must begin with 'j-'";
+    }
+    if (clusterId.length !== 15) {
+      return "Provide the Cluster ID, like j-AABBCCDD00112";
+    }
+    return undefined;
+  }
+
+  shouldResume() {
+    // Could show a notification with the option to resume.
+    return new Promise<boolean>((resolve, reject) => {
+      // noop
+    });
+  }
+
+  public async run() {
+    const state = await this.collectInputs();
+
+    const detail = `Entry point: ${state.s3TargetURI}${basename(
+      state.srcScriptURI
+    )}\Cluster ID: ${state.clusterID}`;
+
+    const confirmDeployment = await vscode.window
+      .showInformationMessage(
+        "Confirm EMR on EC2 deployment",
+        { modal: true, detail },
+        "Yes"
+      )
+      .then((answer) => {
+        return answer === "Yes";
+      });
+
+    if (confirmDeployment) {
+      await this.deploy(
+        state.clusterID,
+        state.jobRoleARN,
+        state.srcScriptURI,
+        state.s3TargetURI,
+        state.s3LogTargetURI,
+      );
+    }
+  }
+
+  private async deploy(
+    clusterID: string,
+    executionRoleARN: string,
+    sourceFile: string,
+    s3TargetURI: string,
+    s3LogTargetURI: string,
+  ) {
+    const data = fs.readFileSync(sourceFile);
+    const bucketName = s3TargetURI.split("/")[2];
+    const key = s3TargetURI.split("/").slice(3).join("/");
+    const fullS3Key = `${key.replace(/\/$/, '')}/${basename(sourceFile)}`;
+    const fullS3Path = `s3://${bucketName}/${fullS3Key}`;
+
+    await this.s3.uploadFile(bucketName, fullS3Key, data);
+    
+    this.emr.startJobRun(clusterID, fullS3Path);
+
+    vscode.window.showInformationMessage("Your job has been submitted, refresh the EMR view to keep an eye on it.");
+  }
+}

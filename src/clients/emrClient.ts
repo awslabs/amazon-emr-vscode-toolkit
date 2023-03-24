@@ -8,6 +8,8 @@ import {
   EMR,
   ListClustersCommand,
   ListStepsCommand,
+  AddJobFlowStepsCommand,
+  AddJobFlowStepsCommandInput,
 } from "@aws-sdk/client-emr";
 import { EMREC2Filter } from "../emr_explorer";
 
@@ -24,7 +26,7 @@ export interface ClusterApp {
 }
 
 export interface ClusterStep {
-  readonly id: string;
+  readonly id?: string;
   readonly name?: string;
   readonly state?: string;
   readonly stateDetails?: string;
@@ -128,5 +130,43 @@ export class DefaultEMRClient {
       return [];
     }
     return steps;
+  }
+
+  public async startJobRun(
+    clusterId: string,
+    entryPoint: string
+  ): Promise<ClusterStep> {
+    this.globals.outputChannel.appendLine(
+      `EMR on EC2: Starting job run (${clusterId}).`
+    );
+
+    const emr = await this.createEMR();
+    let step: ClusterStep = {};
+    let scriptName = entryPoint.split("/").reverse()[0];
+
+    let jobRunParams: AddJobFlowStepsCommandInput = {
+      JobFlowId: clusterId,
+      Steps: [
+        {
+          Name: `vs-code: ${scriptName}`,
+          HadoopJarStep: {
+            Jar: "command-runner.jar",
+            Args: ["spark-submit", "--deploy-mode", "cluster", entryPoint],
+          },
+        },
+      ],
+    };
+
+    try {
+      const result = await emr.send(new AddJobFlowStepsCommand(jobRunParams));
+      let step: ClusterStep = { id: result.StepIds![0] };
+      return step;
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        "There was an error running the EMR on EC2 job:" + error
+      );
+    }
+
+    return step;
   }
 }
