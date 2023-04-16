@@ -46,7 +46,7 @@ RUN python3 -m pip install -U pip
 RUN python3 -m pip install ipykernel
 
 # Enable pytest
-run python3 -m pip install pytest
+RUN python3 -m pip install pytest
 
 # Switch back to the default user
 USER hadoop:hadoop
