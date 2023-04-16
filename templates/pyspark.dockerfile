@@ -1,6 +1,6 @@
 # See here for image details: https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/docker-custom-images-steps.html
 # Arguments used to build the image URI - update to your desired region/EMR release version per the link above
-ARG RELEASE="emr-6.6.0"
+ARG RELEASE="emr-6.10.0"
 ARG RELEASE_TAG="latest"
 ARG REGION="us-west-2"
 ARG EMR_ACCOUNT_ID="895885662937"
@@ -44,6 +44,9 @@ RUN python3 -m pip install -U pip
 
 # Enable Jupyter notebooks
 RUN python3 -m pip install ipykernel
+
+# Enable pytest
+run python3 -m pip install pytest
 
 # Switch back to the default user
 USER hadoop:hadoop
