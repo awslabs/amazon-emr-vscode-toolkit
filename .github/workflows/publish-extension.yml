@@ -91,6 +91,8 @@ jobs:
   publishGH:
     name: Publish to GitHub releases
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: package
     if: github.event.inputs.publishGH == 'true'
     steps:
@@ -100,18 +102,11 @@ jobs:
 
       - name: Create Release
         id: create-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.package.outputs.tag }}
-          release_name: Release ${{ needs.package.outputs.version }}
-          draft: false
-          prerelease: false
-
-      - name: Upload assets to a Release
-        uses: AButler/upload-release-assets@v2.0
+        uses: softprops/action-gh-release@v1
         with:
           files: ${{ needs.package.outputs.packageName }}
-          release-tag: ${{ needs.package.outputs.tag }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ needs.package.outputs.tag }}
+          release: Release ${{ needs.package.outputs.version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
