@@ -42,11 +42,10 @@ RUN if [ "$TARGETARCH" != "amd64" ]; then yum install -y gcc python3-devel; fi
 # Upgrade pip first
 RUN python3 -m pip install -U pip
 
-# Enable Jupyter notebooks
-RUN python3 -m pip install ipykernel
-
-# Enable pytest
-RUN python3 -m pip install pytest
+# Enable Jupyter notebooks and pytest
+RUN python3 -m pip install \
+     ipykernel \
+     pytest
 
 # Switch back to the default user
 USER hadoop:hadoop
