@@ -14,8 +14,8 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import path = require("path");
 
-function welcomeText(region: string, accountId: string, authType: string) {
-  const envUpdate = (authType === "ENV_FILE") ? "- Update .devcontainer/aws.env with your AWS credentials.\n": "";
+function welcomeText(region: string, accountId: string, authType: string, devcontainerRelPath: string) {
+  const envUpdate = (authType === "ENV_FILE") ? `- Update ${devcontainerRelPath}/aws.env with your AWS credentials.\n\n    aws configure export-credentials \\\n    --format env-no-export \\\n    > ${devcontainerRelPath}/aws.env\n\n`: "";
   return `# EMR Local Container
 
 ## Getting Started
@@ -24,11 +24,11 @@ Thanks for installing your local EMR environment. To get started, there are a fe
 
 ${envUpdate}- Login to ECR with the following command:
 
-        aws ecr get-login-password --region ${region} \\
-        | docker login \\
-            --username AWS \\
-            --password-stdin \\
-            ${accountId}.dkr.ecr.${region}.amazonaws.com
+    aws ecr get-login-password --region ${region} \\
+    | docker login \\
+        --username AWS \\
+        --password-stdin \\
+        ${accountId}.dkr.ecr.${region}.amazonaws.com
 
 - Use the \`Remote-Containers: Reopen in Container\` command to build your new environment.
 
@@ -254,11 +254,19 @@ export class EMRLocalEnvironment {
       return;
     }
 
+    // We create a devcontainer specific to each release
     const wsPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-    if (!fs.existsSync(wsPath + "/.devcontainer")) {
-      fs.mkdirSync(wsPath + "/.devcontainer");
+    let relContainerPath = path.join(".devcontainer", release);
+    let targetDcPath = path.join(wsPath, relContainerPath);
+
+    // If this path already exists, simply append a counter. :)
+    let counter = 0;
+    while (fs.existsSync(targetDcPath)) {
+      counter += 1;
+      relContainerPath = path.join(".devcontainer", `${release}_${counter}`);
+      targetDcPath = path.join(wsPath, relContainerPath);
     }
-    const targetDcPath = vscode.Uri.file(wsPath + "/.devcontainer");
+    fs.mkdirSync(targetDcPath, {recursive: true});
 
     const demoFileName = "emr_tools_demo.py";
     const samplePyspark = this.context.asAbsolutePath(
@@ -278,6 +286,9 @@ export class EMRLocalEnvironment {
     const devContainerConfig = JSON.parse(
       stripJSONComments(fs.readFileSync(dcPath).toString())
     );
+    // Use a friendly name
+    devContainerConfig["name"] = `EMR ${release.replace("emr-", "")}`;
+
     // Update the devcontainer with the requisite release and Image URI details
     devContainerConfig["build"]["args"]["RELEASE"] = release;
     devContainerConfig["build"]["args"]["REGION"] = region;
@@ -304,9 +315,9 @@ export class EMRLocalEnvironment {
       };
     } else if (authType === "ENV_FILE") {
       devContainerConfig['runArgs'] = [
-        "--env-file", "${localWorkspaceFolder}/.devcontainer/aws.env"
+        "--env-file", path.join("${localWorkspaceFolder}", relContainerPath, "aws.env")
       ];
-      fs.copyFileSync(envPath, targetDcPath.fsPath + "/aws.env");
+      fs.copyFileSync(envPath, path.join(targetDcPath, "aws.env"));
     }
 
     // TODO (2022-07-22): Optionally, add mounts of ~/.aws exists
@@ -319,14 +330,14 @@ export class EMRLocalEnvironment {
     const dockerfile = fs.readFileSync(dockerfilePath).toString();
 
     fs.writeFileSync(
-      targetDcPath.fsPath + "/devcontainer.json",
+      path.join(targetDcPath, "devcontainer.json"),
       JSON.stringify(devContainerConfig, null, "  ")
     );
-    fs.writeFileSync(targetDcPath.fsPath + "/Dockerfile", dockerfile);
-    fs.copyFileSync(samplePyspark, wsPath + `/${demoFileName}`);
+    fs.writeFileSync(path.join(targetDcPath, "Dockerfile"), dockerfile);
+    fs.copyFileSync(samplePyspark, path.join(wsPath, demoFileName));
 
-    const howtoPath = vscode.Uri.file(wsPath).fsPath + "/emr-local.md";
-    fs.writeFileSync(howtoPath, welcomeText(region, account, authType));
+    const howtoPath = path.join(wsPath, "emr-local.md");
+    fs.writeFileSync(howtoPath, welcomeText(region, account, authType, relContainerPath));
     vscode.workspace
       .openTextDocument(howtoPath)
       .then((a: vscode.TextDocument) => {
