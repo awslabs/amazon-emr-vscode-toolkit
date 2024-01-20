@@ -41,7 +41,7 @@ jobs:
 
       - name: Setup package path
         id: setup
-        run: echo "::set-output name=packageName::$(node -e "console.log(require('./package.json').name + '-' + require('./package.json').version + '.vsix')")"
+        run: echo "packageName=$(node -e "console.log(require('./package.json').name + '-' + require('./package.json').version + '.vsix')")" >> "$GITHUB_OUTPUT"
 
       - name: Package
         run: |
@@ -58,8 +58,8 @@ jobs:
         run: |
           $version = (Get-Content ./package.json -Raw | ConvertFrom-Json).version
           Write-Host "tag: v$version"
-          Write-Host "::set-output name=tag::v$version"
-          Write-Host "::set-output name=version::$version"
+          Write-Host "tag=v$version" >> "$GITHUB_OUTPUT"
+          Write-Host "version=$version" >> "$GITHUB_OUTPUT"
         shell: pwsh
 
   publishMS:
