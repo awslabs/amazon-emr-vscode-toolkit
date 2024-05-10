@@ -80,6 +80,11 @@ export class EMRLocalEnvironment {
     }
 
     const emrReleases = [
+      { label: "EMR 6.15.0", releaseVersion: "emr-6.15.0" },
+      { label: "EMR 6.14.0", releaseVersion: "emr-6.14.0" },
+      { label: "EMR 6.13.0", releaseVersion: "emr-6.13.0" },
+      { label: "EMR 6.12.0", releaseVersion: "emr-6.12.0" },
+      { label: "EMR 6.11.0", releaseVersion: "emr-6.11.0" },
       { label: "EMR 6.10.0", releaseVersion: "emr-6.10.0" },
       { label: "EMR 6.9.0", releaseVersion: "emr-6.9.0" },
       { label: "EMR 6.8.0", releaseVersion: "emr-6.8.0" },
