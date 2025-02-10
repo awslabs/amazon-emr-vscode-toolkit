@@ -41,6 +41,19 @@ ${envUpdate}- Login to ECR with the following command:
 `;
 }
 
+function getEmrMajorVersion(emrRelease: string): number | null {
+
+  // Regular expression to match emr-5.x[.y] or emr-6.x[.y] or emr-7.x[.y] format
+  const emrPattern = /^emr-(5|6|7)\.\d+(\.\d+)?$/;
+  const match = emrRelease.match(emrPattern);
+  
+  if (match) {
+      return parseInt(match[1]); // Returns 5, 6, or 7
+  }
+  return null;
+}
+
+
 export class EMRLocalEnvironment {
   context: vscode.ExtensionContext;
 
@@ -80,6 +93,13 @@ export class EMRLocalEnvironment {
     }
 
     const emrReleases = [
+      { label: "EMR 7.6.0", releaseVersion: "emr-7.6.0" },
+      { label: "EMR 7.5.0", releaseVersion: "emr-7.5.0" },
+      { label: "EMR 7.4.0", releaseVersion: "emr-7.4.0" },
+      { label: "EMR 7.3.0", releaseVersion: "emr-7.3.0" },
+      { label: "EMR 7.2.0", releaseVersion: "emr-7.2.0" },
+      { label: "EMR 7.1.0", releaseVersion: "emr-7.1.0" },
+      { label: "EMR 7.0.0", releaseVersion: "emr-7.0.0" },
       { label: "EMR 6.15.0", releaseVersion: "emr-6.15.0" },
       { label: "EMR 6.14.0", releaseVersion: "emr-6.14.0" },
       { label: "EMR 6.13.0", releaseVersion: "emr-6.13.0" },
@@ -318,16 +338,33 @@ export class EMRLocalEnvironment {
     // "source=${env:HOME}${env:USERPROFILE}/.aws,target=/home/hadoop/.aws,type=bind"
     // Also make adding environment credentials optional...they could get exposed in logs
 
-    const dockerfilePath = this.context.asAbsolutePath(
-      path.join("templates", "pyspark.dockerfile")
-    );
-    const dockerfile = fs.readFileSync(dockerfilePath).toString();
+    let dockerfilePath;
+
+    if (getEmrMajorVersion(release) === 5 || getEmrMajorVersion(release) === 6) {
+      dockerfilePath = this.context.asAbsolutePath(
+        path.join("templates", "pyspark-emr-6_x.dockerfile")
+      );
+    } else if (getEmrMajorVersion(release) === 7) {
+      dockerfilePath = this.context.asAbsolutePath(
+        path.join("templates", "pyspark-emr-7_x.dockerfile")
+      );
+    } else {
+      throw new Error(`EMR version ${release} not supported`);
+    }
+
+
+    let dockerfile;
+
+    if (dockerfilePath) {
+      dockerfile = fs.readFileSync(dockerfilePath).toString();
+    }
+    
 
     fs.writeFileSync(
       targetDcPath.fsPath + "/devcontainer.json",
       JSON.stringify(devContainerConfig, null, "  ")
     );
-    fs.writeFileSync(targetDcPath.fsPath + "/Dockerfile", dockerfile);
+    fs.writeFileSync(targetDcPath.fsPath + "/Dockerfile", dockerfile!);
     fs.copyFileSync(samplePyspark, wsPath + `/${demoFileName}`);
 
     const howtoPath = vscode.Uri.file(wsPath).fsPath + "/emr-local.md";
