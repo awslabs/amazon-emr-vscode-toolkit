@@ -208,7 +208,7 @@ class InstanceNodeTree extends vscode.TreeItem {
   children: InstanceNodeTree[]|undefined;
 
   constructor(label: string, children?: InstanceNodeTree[], description?: string) {
-    super(label, children === undefined ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed)
+    super(label, children === undefined ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
     this.children = children;
     if (description) { this.description = description;}
   }

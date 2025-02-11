@@ -11,7 +11,7 @@ export async function connectToClusterCommand(
     // For now, we'll just forward some default ports
     // TODO: Get the active primary node of the passed cluster
     const targetNode = "i-0ce9287cb94b72a8b";
-    console.log("Connecting to ", targetNode)
+    console.log("Connecting to ", targetNode);
     const client = new SSMClient({ region: "us-west-2" });
     const params = {
         DocumentName: "AWS-StartPortForwardingSession",

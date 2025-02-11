@@ -181,7 +181,7 @@ export function activate(context: vscode.ExtensionContext) {
         await emrEC2Deployer.run();
       }
     )
-  )
+  );
 
   // Deployment support for all our available options
   // Removing until future release :)

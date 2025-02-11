@@ -41,6 +41,19 @@ ${envUpdate}- Login to ECR with the following command:
 `;
 }
 
+function getEmrMajorVersion(emrRelease: string): number | null {
+
+  // Regular expression to match emr-5.x[.y] or emr-6.x[.y] or emr-7.x[.y] format
+  const emrPattern = /^emr-(5|6|7)\.\d+(\.\d+)?$/;
+  const match = emrRelease.match(emrPattern);
+  
+  if (match) {
+      return parseInt(match[1]); // Returns 5, 6, or 7
+  }
+  return null;
+}
+
+
 export class EMRLocalEnvironment {
   context: vscode.ExtensionContext;
 
@@ -80,6 +93,14 @@ export class EMRLocalEnvironment {
     }
 
     const emrReleases = [
+      { label: "EMR 7.7.0", releaseVersion: "emr-7.7.0" },
+      { label: "EMR 7.6.0", releaseVersion: "emr-7.6.0" },
+      { label: "EMR 7.5.0", releaseVersion: "emr-7.5.0" },
+      { label: "EMR 7.4.0", releaseVersion: "emr-7.4.0" },
+      { label: "EMR 7.3.0", releaseVersion: "emr-7.3.0" },
+      { label: "EMR 7.2.0", releaseVersion: "emr-7.2.0" },
+      { label: "EMR 7.1.0", releaseVersion: "emr-7.1.0" },
+      { label: "EMR 7.0.0", releaseVersion: "emr-7.0.0" },
       { label: "EMR 6.15.0", releaseVersion: "emr-6.15.0" },
       { label: "EMR 6.14.0", releaseVersion: "emr-6.14.0" },
       { label: "EMR 6.13.0", releaseVersion: "emr-6.13.0" },
@@ -146,22 +167,33 @@ export class EMRLocalEnvironment {
       state: Partial<State>
     ) {
       const regionMapping = [
+        { label: "ap-east-1", accountId: "736135916053" },
         { label: "ap-northeast-1", accountId: "059004520145" },
         { label: "ap-northeast-2", accountId: "996579266876" },
+        { label: "ap-northeast-3", accountId: "705689932349" },
+        { label: "ap-southeast-3", accountId: "946962994502" },
         { label: "ap-south-1", accountId: "235914868574" },
+        { label: "ap-south-2", accountId: "691480105545" },
         { label: "ap-southeast-1", accountId: "671219180197" },
         { label: "ap-southeast-2", accountId: "038297999601" },
         { label: "ca-central-1", accountId: "351826393999" },
         { label: "eu-central-1", accountId: "107292555468" },
+        { label: "eu-central-2", accountId: "314408114945" },
         { label: "eu-north-1", accountId: "830386416364" },
         { label: "eu-west-1", accountId: "483788554619" },
         { label: "eu-west-2", accountId: "118780647275" },
         { label: "eu-west-3", accountId: "307523725174" },
+        { label: "eu-south-1", accountId: "238014973495" },
+        { label: "eu-south-2", accountId: "350796622945" },
+        { label: "il-central-1", accountId: "395734710648" },
+        { label: "me-south-1", accountId: "008085056818" },
+        { label: "me-central-1", accountId: "818935616732" },
         { label: "sa-east-1", accountId: "052806832358" },
         { label: "us-east-1", accountId: "755674844232" },
         { label: "us-east-2", accountId: "711395599931" },
         { label: "us-west-1", accountId: "608033475327" },
         { label: "us-west-2", accountId: "895885662937" },
+        { label: "af-south-1", accountId: "358491847878" },
       ];
       const pick = await input.showQuickPick({
         title,
@@ -318,16 +350,33 @@ export class EMRLocalEnvironment {
     // "source=${env:HOME}${env:USERPROFILE}/.aws,target=/home/hadoop/.aws,type=bind"
     // Also make adding environment credentials optional...they could get exposed in logs
 
-    const dockerfilePath = this.context.asAbsolutePath(
-      path.join("templates", "pyspark.dockerfile")
-    );
-    const dockerfile = fs.readFileSync(dockerfilePath).toString();
+    let dockerfilePath;
+
+    if (getEmrMajorVersion(release) === 5 || getEmrMajorVersion(release) === 6) {
+      dockerfilePath = this.context.asAbsolutePath(
+        path.join("templates", "pyspark-emr-6_x.dockerfile")
+      );
+    } else if (getEmrMajorVersion(release) === 7) {
+      dockerfilePath = this.context.asAbsolutePath(
+        path.join("templates", "pyspark-emr-7_x.dockerfile")
+      );
+    } else {
+      throw new Error(`EMR version ${release} not supported`);
+    }
+
+
+    let dockerfile;
+
+    if (dockerfilePath) {
+      dockerfile = fs.readFileSync(dockerfilePath).toString();
+    }
+    
 
     fs.writeFileSync(
       targetDcPath.fsPath + "/devcontainer.json",
       JSON.stringify(devContainerConfig, null, "  ")
     );
-    fs.writeFileSync(targetDcPath.fsPath + "/Dockerfile", dockerfile);
+    fs.writeFileSync(targetDcPath.fsPath + "/Dockerfile", dockerfile!);
     fs.copyFileSync(samplePyspark, wsPath + `/${demoFileName}`);
 
     const howtoPath = vscode.Uri.file(wsPath).fsPath + "/emr-local.md";
