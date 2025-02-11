@@ -167,22 +167,33 @@ export class EMRLocalEnvironment {
       state: Partial<State>
     ) {
       const regionMapping = [
+        { label: "ap-east-1", accountId: "736135916053" },
         { label: "ap-northeast-1", accountId: "059004520145" },
         { label: "ap-northeast-2", accountId: "996579266876" },
+        { label: "ap-northeast-3", accountId: "705689932349" },
+        { label: "ap-southeast-3", accountId: "946962994502" },
         { label: "ap-south-1", accountId: "235914868574" },
+        { label: "ap-south-2", accountId: "691480105545" },
         { label: "ap-southeast-1", accountId: "671219180197" },
         { label: "ap-southeast-2", accountId: "038297999601" },
         { label: "ca-central-1", accountId: "351826393999" },
         { label: "eu-central-1", accountId: "107292555468" },
+        { label: "eu-central-2", accountId: "314408114945" },
         { label: "eu-north-1", accountId: "830386416364" },
         { label: "eu-west-1", accountId: "483788554619" },
         { label: "eu-west-2", accountId: "118780647275" },
         { label: "eu-west-3", accountId: "307523725174" },
+        { label: "eu-south-1", accountId: "238014973495" },
+        { label: "eu-south-2", accountId: "350796622945" },
+        { label: "il-central-1", accountId: "395734710648" },
+        { label: "me-south-1", accountId: "008085056818" },
+        { label: "me-central-1", accountId: "818935616732" },
         { label: "sa-east-1", accountId: "052806832358" },
         { label: "us-east-1", accountId: "755674844232" },
         { label: "us-east-2", accountId: "711395599931" },
         { label: "us-west-1", accountId: "608033475327" },
         { label: "us-west-2", accountId: "895885662937" },
+        { label: "af-south-1", accountId: "358491847878" },
       ];
       const pick = await input.showQuickPick({
         title,
