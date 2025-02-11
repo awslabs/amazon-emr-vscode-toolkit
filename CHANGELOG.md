@@ -1,5 +1,18 @@
 # Change Log
 
+
+## 0.6.2 - 2024-05-17
+
+### Bug Fixes
+
+- Fix duplicate entry for EMR 6.2 [#43](https://github.com/awslabs/amazon-emr-vscode-toolkit/pull/43)
+
+## 0.6.1 - 2024-05-10
+
+### Features
+
+- Add new EMR releases EMR 6.11 to EMR 6.15 [#41](https://github.com/awslabs/amazon-emr-vscode-toolkit/issues/41)
+
 ## 0.6.0 - 2023-03-24
 
 ### Features
