@@ -27,8 +27,10 @@
   
     "remoteEnv": {
       "PYTHONPATH": "/usr/lib/spark/python/lib/py4j-src.zip:/usr/lib/spark/python",
-      "PATH": "${containerEnv:PATH}:/home/hadoop/.local/bin"
+      "PATH": "${containerEnv:PATH}:/home/hadoop/.local/bin:/usr/local/sbin:/usr/sbin:/usr/local/bin:/user/bin:/sbin:/bin"
     },
+
+    "remoteUser": "hadoop:hadoop",
   
     // "runArgs": ["--env-file", "${localWorkspaceFolder}/.env"],
   
